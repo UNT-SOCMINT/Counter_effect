@@ -14,6 +14,7 @@
 \usepackage{multirow}
 \usepackage{verbatim}
 \usepackage{array}
+\usepackage{xcolor}
 
 % For proper rendering and hyphenation of words containing Latin characters (including in bib files)
 \usepackage[T1]{fontenc}
@@ -86,14 +87,13 @@
 \begin{abstract}
 User-generated counter hate speech is a promising means to combat hate speech,
 but questions about effectiveness linger.
-Rather than identifying counter hate, this study assesses the effectiveness of replies to hateful content at stopping the spread of hatred.
-We estimate effectiveness based on the discourse following a reply: number of messages and how many are hateful.
 We argue that what matters is stopping hatred---counter hate speech that elicits more hate is counterproductive.
+This study investigates what replies to hate may stop the spread of hatred by assessing the effectiveness through following conversations. 
+The effectiveness is measured based on the discourse following a reply: number of messages and how many are hateful.
 A linguistic analysis draws insights into 
 the language of highly, somewhat, and barely effective replies.
-Experimental results show that forecasting effectiveness at stopping hate is challenging.
-We close with a qualitative analysis shedding light into the most common errors made by the best model,
-including hateful content that is highly effective and polite counter hate arguments that are barely effective.
+Experimental results show that forecasting effectiveness at stopping hate based on language is challenging.
+We close with a qualitative analysis shedding light into the most common errors made by the best model.
 \end{abstract}
 
 \section{Introduction}
@@ -141,31 +141,32 @@ The first post is hateful towards feminists in general.
 The second post is a strong counter hate argument if we ignore the follow-up conversation.
 As strong as it might be, however, it is ineffective: the next post escalates the hateful content further by attacking the author.
 
-In this paper, we do not limit ourselves to focusing on counter hate speech.
-Rather, we analyze the effectiveness of all replies to hateful content at stopping hatred.
+In this paper, we propose to analyze the effectiveness of replies to hateful content at stopping hatred.
+We do not limit ourselves to focusing on counter hate speech. 
+Rather, we analyze the characteristics of all replies with varying degrees of effectiveness. 
 Regardless of the content---short or long, offensive or polite, well-argued or fatally flawed from a logic standpoint---we consider a reply effective if the discourse that follows is primarily not hateful.
 Our rationale is that what matters is preventing hateful content from spreading rather than coming up with elaborate counter hate arguments.
 Further, we argue that looking at genuine online discourse and assessing what comments elicit additional hateful content---even if they are well-meaning and polished counter hate arguments---is a worthwhile goal.
 
 The complexity of discourse dynamics as well as the existence of unquantifiable outside influences (e.g.,user's mood) make analysis of effectiveness difficult from a causal perspective~\cite{garland2022impact}. 
-In this study, we make no causal claims and take a more empirical approach to look at the relations between the use of language and its effectiveness in stopping the spread of online hatred.
+In this study, we make no causal claims and take a more empirical approach to look at the relations between the use of language and the degree of non-hatefulness in the following discourse, which is defined as the effectiveness of stopping hatred. 
 The work presented here could inspire actionable knowledge to prevent the spread of hate---a challenging goal as
 hate networks often have rapid rewiring and self-repairing mechanisms~\cite{johnson2019hidden}.
-Our approach could further serve as a salient complement for improving current counter hate speech detection and generation systems.
+Our approach could completement current studies on counter hate speech detection and generation by 1) investigating a rich source of language replies to hate and 2) understanding the reply language with varying degrees of effectiveness, which could provide insights about counter speech strategies and guidance for manually compiling counter hate arguments.
+
 
 We study this problem with a new dataset of Reddit conversations.\footnote{Data and code available at anonymous.link}
 For the metric to measure effectiveness, 
 following previous studies that consider hateful messages (either how many or a combined hate score) ~\cite{DBLP:conf/icwsm/LiuGHC18,DBLP:conf/kdd/DahiyaSSGCEMB021,garland2022impact}, we also take the number of non-hateful messages into account.
-We argue that our metric is more sound.
-For example, a reply to hateful content 
-followed by five hateful posts is less effective at stopping hatred than one followed by one hateful post
-despite the average hate scores of the posts published after both replies are the same.
-Armed with the Reddit conversations and our metric to calculate effectiveness at stopping hatred,
-we first conduct a linguistic analysis to identify the language of the highly, somewhat, and barely effective replies to hateful posts.
-Additionally, we experiment with classifiers to identify whether a reply will be highly, somewhat or barely effective.
-Our models obtain modest results,
-and we present a qualitative analysis describing the most common error types.
-We also answer these questions:
+The metric is verified to be more in line with users' perception of effectiveness. 
+For example, a reply to hateful content followed by five hateful posts is less effective at stopping hatred than one followed by one hateful post
+despite the proportion of hateful posts after both replies are the same.
+Using the Reddit dataset and the proposed metric on effectiveness,
+we first conduct a linguistic analysis to identify the language of replies to hateful posts with varying degrees of effectiveness. 
+Then, we experiment with classifiers to predict the level of effectiveness. 
+Our models obtain modest results in identifying whether a reply is highly, somewhat or barely effective, while achive reasonably good performance in identifying top highly/barely effective replies. 
+Finally, we present a qualitative analysis on the most common error types by our best model.
+We answer the following questions in this study:
 \begin{compactenum}
 	\item Are all replies to hateful posts equally effective at stopping hatred? (they aren't);
 	\item Do highly, somewhat, and barely effective replies use different language? (they do);
@@ -185,7 +186,7 @@ Twitter~\cite{waseem-hovy-2016-hateful, hateoffensive},
 Yahoo!~\cite{nobata2016abusive},
 Fox News~\cite{gao-huang-2017-detecting},
 Gab~\cite{DBLP:conf/aaai/MathewSYBG021},
-and Reddit~\cite{qian-etal-2019-benchmark}.
+and Reddit~\cite{qian-etal-2019-benchmark}. 
 
 There are several efforts on forecasting whether online content will result in additional hateful content.
 \citet{10.1145/2998181.2998213} build models to predict whether
@@ -194,14 +195,13 @@ a moderator will flag a post for removal.
 \citet{DBLP:conf/icwsm/LiuGHC18} conduct a study to forecast whether an Instagram post will receive more than $n$ hateful comments.
 \citet{DBLP:conf/kdd/DahiyaSSGCEMB021} use a tweet and a few of the initial replies to forecast the hate score of upcoming replies.
 They calculate hate score by adding the probability from a toxicity classifier and the presence of hate words.
-These previous works propose several options to estimate hate in future content.
-Unlike them, we estimate the effectiveness of a reply to hateful content at stopping hatred.
-Estimating future hate is only a component of estimating effectiveness: non-hateful content is a good indicator of effectiveness at stopping hate.
+These previous works provide different methods to measure hate in following discourses. 
+Unlike them, we focus on the effectiveness of a reply to hateful content at stopping hatred.
+Estimating future hate is only a component of estimating effectiveness: non-hateful content is also a good indicator of effectiveness at stopping hate.
 
 
 \paragraph{Counter hate speech}
-Compared with hate speech, there are fewer studies on counter hate speech.
-They mainly focus on counter hate speech detection~\cite{DBLP:conf/icwsm/MathewSTRSMG019,chung-etal-2019-conan,he2021racism,garland-etal-2020-countering} 
+Existing studies on counter hate speech mainly focus on counter hate speech detection~\cite{DBLP:conf/icwsm/MathewSTRSMG019,chung-etal-2019-conan,he2021racism,garland-etal-2020-countering} 
 and generation~\cite{tekiroglu-etal-2020-generating,fanton-etal-2021-human,zhu-bhat-2021-generate}. 
 There are also efforts to classify counter hate speech into fine-grained categories~\cite{DBLP:conf/icwsm/MathewSTRSMG019,chung-etal-2021-multilingual}. 
 
@@ -212,24 +212,24 @@ The size of their dataset, however, is small (2k).
 \citet{DBLP:conf/icwsm/MathewSTRSMG019} work with hateful videos towards groups
 and counter hate content from the video comments.
 Their dataset does not specify the hateful content countered in the comments, making it difficult to understand the counter hate content.
-Lastly, \citet{chung-etal-2019-conan} collect synthetic counter hate speech generated on-demand by trained operators.
+\citet{chung-etal-2019-conan} collect synthetic counter hate speech generated on-demand by trained operators.
 Compared to genuine counter hate speech written by regular people out of their own desires and motivations,
 synthetic counter hate speech is not as rich (e.g., \emph{This kind of language is inappropriate and should be avoided}).
-Rather than defining and either detecting or generating counter hate speech,
-in this paper we analyze the user-generated content that stops the spread of hatred \emph{in real online conversations}.
-Since we measure effectiveness at stopping hatred automatically, 
-we bypass the burden of manual annotations.
+Rather than defining then addressing the detection or generation of counter hate speech,
+we analyze user-generated replies to understand the language that stops the spread of hatred \emph{in real online conversations}.
+The effectiveness is computed based on the following discourses, which enables us to bypass the burden of manual annotations and study replies to hateful posts in a much larger scale. 
 
 
-Small-scale user studies have been conducted to investigate the effectiveness of counter hate speech by comparing the outcomes from a control group with the treatment group that that has received interventions~\cite{munger2017tweetment,hangartner2021empathy,bilewicz2021artificial}. 
+Small-scale user studies have been conducted to investigate the effectiveness of counter hate speech by comparing the outcomes from a control group with the treatment group that has received interventions~\cite{munger2017tweetment,hangartner2021empathy,bilewicz2021artificial}. 
 The only large-scale work is by \citet{garland2022impact}.
 They work with German tweets and estimate effectiveness at stopping hatred by comparing the 
 average hate scores of all content before and after.
 Unlike them, 
 we 
-(a) calculate effectiveness taking into account the number of all posts a reply elicits as opposed to the average hate scores, 
-and 
-(b) emphasize the differences in the use of language based on their effectiveness.
+(a) propose a new metric to calculate the effectiveness of stopping hatred as opposed to the average hate scores, 
+(b) emphasize the differences in the use of language based on their effectiveness,
+and
+(c) explore models to predict varying degrees of effectiveness. 
 
 
 \section{A Metric for Measuring Effectiveness at Stopping Hatred} %.Measuring Effectiveness}
@@ -238,8 +238,12 @@ We propose a new metric to measure how effective a reply $r$ to hateful content 
 Our metric consists of two main components: popularity and hatefulness.
 Popularity, denoted $P(r)$, refers to the number of comments published after $r$.
 Hatefulness, denoted $H(r)$, refers to the number of comments published after $r$ which are hateful.
-Intuitively, the more hateful comments the least effective $r$ is,
-but high popularity could neutralize some of the hateful comments.
+Intuitively, effective replies will elicit more replies, i.e., higher popularity, but with fewer hateful comments, i.e., less hatefulness.  
+We use a parameter $\alpha$ to adjust the weight of $P(r)$ and $H(r)$ in their contribution to the metric. The larger $alpha$ is, the more important popularity is in the evaluation of effectiveness, i.e., a few non-hateful comments can neutralize the effect of one hateful comment. 
+Additionally, we set a parameter $\lambda$ to give a "reward" for cases that $r$ does not receive any hateful comments in the following discourse. 
+It is assumed that replies with no following hateful comments are more encouraged according to previous studies, thus given a "reward" to the effectiveness score. 
+The greater $c$ is, the more "reward" is given to cases when there are no hateful follow-up comments. In other words, more non-hateful follow-up comments are needed to neutralize one hateful comment.
+
 We formally define the effectiveness score of $r$ as follows:
 $$S(r) = \alpha P(r) - (1-\alpha) H(r) + \lambda$$
 Where
@@ -251,21 +255,8 @@ Where
 \end{cases}
 \]
 
-The parameter $\alpha$ determines how much weight to give to each component.
-We later experiment with $\alpha = 0.2$, as we believe that hateful content is more critical and several non-hateful messages are needed to neutralize hateful content.
-The parameter $\lambda$ is a constant $c$ (0.8 in our setting) to be added only when there is no hateful comments after $r$.
-This is to give a "reward" in the case that $r$ does not receive any hateful comments. 
-In other words, the greater $c$ is, the more non-hateful follow-up comments are needed to neutralize one hateful comment.
-However, we do not claim that our setting is the only option or the best one. 
-We note that absolute effectiveness scores are not as important as relative values.
-Here are two examples:
-\begin{compactitem}
-	\item If there are ten comments after $r$ and none of them are hateful ($P(r)=10$, $H(r)=0$), the score is $S(r)=2.8$.
-	\item If there are three comments after $r$ and two of them are hateful ($P(r)=3$, $H(r)=2$), the score is $S(r)=-1$.
-\end{compactitem}
-
 The next section describes an application of this metric using online content from Reddit
-and discusses a manual validation.
+and discusses a selection of the parameters $\alpha$ and $\lambda$ and the manual validation based on the dataset. 
 
 %We first describe our procedure to identify \emph{Hate}, and to construct (\emph{Hate}, \emph{Reply}) pairs,
 %where both \emph{Hates} and \emph{Replys} are Reddit comments in English. 
@@ -295,15 +286,15 @@ As we shall see, the second step requires identifying hateful content in the com
 
 \subsection{Identifying Hate Comments and Their Replies}
 \label{ss:identify}
-We identify hateful content in the 1,382,596 coments using pre-trained models \cite{DBLP:journals/corr/abs-1907-11692} with the corpus by~\citet{qian-etal-2019-benchmark}
+We identify hateful content in the 1,382,596 coments using a pre-trained hate speech classifier \cite{DBLP:journals/corr/abs-1907-11692} with the corpus by~\citet{qian-etal-2019-benchmark}
 and
 the implementation by~\citet{phang2020jiant}.
 We made this choice for several reasons.
 First, the corpus annotates Reddit comments as hateful or not hateful, the same domain we work with.
-Second, our classifier obtains outstanding results: 0.93 F1.
-In a more strict evaluation using Cohen's $\kappa$, we obtain $\kappa=0.83$ between the predictions and the gold annotations in the test set.
+Second, the classifier obtains outstanding results: 0.93 F1.
+In a more strict evaluation using Cohen's $\kappa$, we obtain $\kappa=0.83$ between the predictions and gold annotations in the test set.
 Note that $\kappa$ coefficients above $0.80$ indicate (almost) perfect agreement~\cite{artstein2008inter}.
-In other words, the predictions from our classifier to identify hate are reliable enough to be considered as ground truth.
+In other words, predictions of hate posts are reliable enough to be considered as ground truth.
 
 \begin{comment}
 %way too many roes to include this in the paper
@@ -329,7 +320,7 @@ and
 (b) each reply to a hateful comment with all future comments in the same thread.
 We found 20,286  hate comments in the 35 subreddits we work with.
 On average, a hate comment has 1.50 direct replies,
-and there are 1.94 comments published after each reply.
+and there are 1.94 comments published after each reply to hate.
 
 %To construct (\emph{Hate}, \emph{Reply}) pairs, we first set about identifying the \emph{Hate}. 
 %The first dataset we utilize is from \citet{qian-etal-2019-benchmark}, which has 22k labeled Reddit comments as hateful or non-hateful. 
@@ -356,6 +347,16 @@ We consider a comment published after a reply as hateful if any of the three cla
 
 After calculating popularity and hatefulness for each reply,
 calculating the effectiveness score $S(r)$ is straightforward.
+We experiment with $\alpha = 0.2$, as we believe that hateful content is more critical and several non-hateful messages are needed to neutralize hateful content in Reddit.
+The parameter $\lambda$ is set to a constant $c= 0.8$ when there is no hateful comments after $r$.
+%Here are two examples: 
+%\begin{compactitem}
+%	\item If there are ten comments after $r$ and none of them are hateful ($P(r)=10$, $H(r)=0$), the score is $S(r)=2.8$.
+%	\item If there are three comments after $r$ and two of them are hateful ($P(r)=3$, $H(r)=2$), the score is $S(r)=-1$.
+%\end{compactitem}
+We do not claim that our setting is the only option or the best one. It's noted that absolute effectiveness scores are not as important as relative values.
+In the following section, we will present manual validation results to show the selection of parameters $\alpha$ and $\lambda$ is reasonable. 
+
 We also use the scores to group all replies into the following categories:
 \begin{compactitem}
 	\item \emph{Highly} effective if $S(r) > c$;
@@ -372,14 +373,15 @@ Our main focus is exploring the differences in the use of language between \emph
 \subsection{Manual Validation}
 We manually validate the soundness of our metric with a sample of 500 replies (250 highly effective and 250 barely effective).
 First, we select Reddit snippets containing
-the hateful comment each of the replies in the sample replies to,
-the reply,
+the reply, 
+the hateful comment it replies to, 
 and all comments published after the reply.
 Second, we pair snippets with highly effective replies and snippets with barely effective replies (250 pairs).
 Third, we show the snippets to an annotator
 and ask her which one of the two replies is more effective at stopping hatred.
-The annotator agrees with the ground truth obtained with our effectiveness metric on 91.6\% of the pairs,
+The annotator agrees with the label obtained by the effectiveness scores on 91.6\% of the pairs,
 and Cohen's $\kappa$ is 0.83, which is considered (almost) perfect.
+\textcolor{red}{One to two sentences to explain why somewhat effective is not evaluated}
 
 \begin{comment}
 
