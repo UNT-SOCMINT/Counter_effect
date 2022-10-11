@@ -513,11 +513,10 @@ The reply, however, also attacks the author of the hate comment (\emph{little ma
 This reply is not effective at stopping hate: out of 33 comments that follow the reply, 26 are hateful.
 
 
-
 \paragraph{Linguistic insights} 
 We perform a linguistic analysis to shed light on the language people use in the replies belonging to each effectiveness level.
 We split the replies into two categories (referential: Yes, or No) depending on whether they refer to the hateful content or its author.
-As we shall see, pretraining with this task is useful to learn models.
+As we shall see, this feature will be beneficial for training models.
 We define it as follows:
 \begin{compactitem}
 	\item Quotes. Inspired by \citet{chakrabarty-etal-2019-ampersand} and \citet{jo-etal-2020-detecting},
@@ -561,23 +560,22 @@ We draw several interesting conclusions:
 	Question marks are often part of rhetorical questions and exclamations are usually not part of well-reasoned arguments but rather personal attacks.
 	\item The textual factors are substantially different depending on whether the reply refers to the hateful comment.
 	For example, most are no longer significant (verbs, negations, quotations, etc.) and more tokens and nouns indicate that a reply is highly effective rather than barely effective when the reply does not refer to the hateful comment.
-	\item Regarding sentiment, negative and positive words indicate barely and highly effective replies.
-	Similarly, profanity, and negative emotions (disgust, angry) are common in barely effective replies.
+	\item Regarding sentiment, there are significant differences in the number of negative and positive words in barely and highly effective replies. 
+	Profanity, and negative emotions (disgust, angry) are common in barely effective replies.
 \end{compactitem}
 
 
 \paragraph{What language in the replies elicits additional comments?}
-The second and third pairwise comparisons analyze the language used in the replies
-that elicits comments.
-Recall that there is no comments after 99\% of somewhat effective replies.
+The second and third pairwise comparisons analyze the linguistic differences between highly and somewhat, barely and somewhat effective replies. 
+As there is no comments after 99\% of somewhat effective replies, these comparisons also indicate language used in the replies that elicits comments.
 
 Despite the language of highly and barely effective replies is substantially different,
 the differences between somewhat effective and either highly or barely effective replies are similar:
 more tokens, nouns, verbs, and all other textual factors in a reply indicating that it will elicit additional comments, except exclamation marks. 
 There are also a few interesting differences:
 \begin{compactitem}
-	\item More exclamation marks indicate that it will not elicit comments that are not hateful.
-	\item More positive words indicate that it will not elicit comments that are hateful.
+	\item Fewer exclamation marks indicate that the reply will elicit more comments that are not hateful (highly vs. somewhat).
+	\item Fewer positive words indicate that it will elicit more comments that are hateful (barely vs. somewhat).
 	\item Profanity, disgust and angry words are good indicators of whether the reply will elicit hateful comments (and thus be barely effective).
 \end{compactitem}
 
@@ -654,7 +652,7 @@ We notice a few factors that attract more \emph{Futures} following the \emph{Rep
 We experiment with models to solve two problems:
 \begin{compactitem}
 	\item Determining the effectiveness level of a reply to hateful content: highly, somewhat or barely effective (Section \ref{ss:levels}); and
-	\item Differentiating between the top-$k$\% and bottom-$k$\% replies according to their effectiveness scores (Section \ref{ss:topbottom}).
+	\item Differentiating the top-$k$\% and bottom-$k$\% replies according to their effectiveness scores (Section \ref{ss:topbottom}).
 \end{compactitem}
 
 %We build neural network models to perform two different tasks:
@@ -722,7 +720,7 @@ and
 	\caption{Experimental results differentiating the top-$k$\% and bottom-$k$\% replies to hateful content according to their effectiveness scores.
 		We present results for several values of $k$.
 		The results are higher than when also identifying \emph{somewhat effective} replies.
-		Additionally, it is easier to differentiate the replies which have the very top and bottom of the effectiveness scores: the lower the $k$, the higher the weighted average.
+		Additionally, it is easier to differentiate replies that have the very top and bottom of the effectiveness scores: the smaller the $k$, the higher the weighted average.
 		%	Results obtained with different $\mathit{k}$ using our best model (Trained with Hate\_Reply+Related task+Weak) from Table \ref{t:model-results}. We also indicate the size of data including both the training and testing data for each $\mathit{k}$. The best results are made when $\mathit{k}$ is 5.
 	}
 	\label{t:model-optimalk}
@@ -865,14 +863,14 @@ These results lead to the following observations:
 
 \subsection{Differentiating between the Top-$k$\% and Bottom-$k$\% replies}
 \label{ss:topbottom}
-Although determining the effectiveness level of any reply to hateful comment is a worthwhile goal (Section \ref{ss:levels}),
+Although determining the effectiveness level of any replies to hateful comment is a worthwhile goal (Section \ref{ss:levels}),
 differentiating between the top-$k$\% and bottom-$k$\% replies according to their effectiveness scores may lead to better actionable knowledge.
-Indeed, the most and least effective replies are more informative than the large amount of highly and barely effective replies.
-Indeed the latter have a large range of effectiveness scores.
+The most and least effective replies are more informative than the large amount of highly and barely effective replies.
+Indeed, the latter have a large range of effectiveness scores.
 
 Table \ref{t:model-optimalk} presents the results with several $k$ values and the best performing system from Table \ref{t:model-results}.
-We include in the top-$k$\% and bottom-$k$\% of all replies with the threshold effectiveness scores.
-The results show that the smaller the $k$, the easier it is to differentiate between the two kinds of replies.
+We include the top-$k$\% and bottom-$k$\% of all replies with the threshold effectiveness scores.
+Results show that the smaller the $k$, the easier it is to differentiate between the two kinds of replies.
 In other words, the most and least effective replies differ in language usage and the classifier is able to distinguish them.
 This is especially true for the top-$k$\% most effective replies when $k=5$.
 
@@ -913,7 +911,8 @@ Using hateful language is a common counter speech strategy~\cite{DBLP:conf/icwsm
 and the model fails to recognize when doing so is highly effective at stopping hate.
 Similarly, the model struggles when countering hate politely is ineffective.
 When correcting misstatements, language toxicity may increase~\cite{10.1145/3411764.3445642}.
-The effectiveness may be affected by other factors such as the user identities or stances they hold, which is another reason the model struggles.
+It implies that in real conversations language is not the only factor that relates to effectiveness. 
+In fact, the effectiveness could be affected by other factors such as the user identities or stances they hold, which can not be captured by language based models. 
 
 
 Sarcasm and irony are also common error types (15\%) in our task,
@@ -931,23 +930,23 @@ Errors may also occur (10\%) when general knowledge is required to identify hate
 For example, calling people \emph{incels}.
 Finally, we observe that \emph{negation} appears in 8\% errors.
 In the example, negations are used to point out the flaws of generalizing.
-We hypothesize that the model fails to identify that the reply is somewhat effective: negation does indicate barely effective replies in general (Table~\ref{t:linguistic-analysis}).
+We hypothesize that the model fails to identify that the reply is somewhat effective: negation does indicate barely effectiveness in general (Table~\ref{t:linguistic-analysis}).
 
 
 \section{Conclusions and Future Work}
 Not all replies to hateful content are equally effective at stopping hatred.
 Indeed, replies that counter the hateful content sometimes elicit additional hate.
 In this paper, we work with a large dataset from Reddit and present a metric to measure effectiveness at stopping hatred.
-Our metric is simple and combines popularity (how many posts are published after a reply?)
-and hatefulness (how many are hateful?).
+Our metric is simple and combines popularity (how many posts are published after a reply)
+and hatefulness (how many are hateful).
 Regardless of whether replies counter hateful content convincingly,
 we believe it is worthwhile to identify what kind of user-generated content is most effective at stopping hatred.
 While we make no causal claims which linguistic features could affect effectiveness, 
 our analysis shows that the language of user-generated replies differs depending on their effectiveness.
 For example,
 longer replies and those with profanity, negative, disgust or angry words are barely effective.
-Experimental results with transformers show that the task of forecasting effectiveness is hard to automate.
-We also show that pretraining and blending existing corpora yield small improvements.
+Experimental results with transformers show that the task of forecasting effectiveness is challenging.
+We also show that pretraining and blending existing corpora yield improvements.
 
 Our work has several limitations. 
 First,  we identify hateful content automatically with classifiers.
