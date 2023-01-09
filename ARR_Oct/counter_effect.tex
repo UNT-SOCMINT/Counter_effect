@@ -5,16 +5,14 @@
 \documentclass[11pt]{article}
 
 % Remove the "review" option to generate the final version.
-\usepackage[review]{acl}
+\usepackage[review]{ACL2023}
 
 % Standard package includes
 \usepackage{times}
 \usepackage{latexsym}
-\usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{verbatim}
 \usepackage{array}
-\usepackage{xcolor}
 
 % For proper rendering and hyphenation of words containing Latin characters (including in bib files)
 \usepackage[T1]{fontenc}
@@ -25,11 +23,14 @@
 % This assumes your files are encoded as UTF8
 \usepackage[utf8]{inputenc}
 
-% This is not strictly necessary, and may be commented out,
-% but it will improve the layout of the manuscript,
+% This is not strictly necessary, and may be commented out.
+% However, it will improve the layout of the manuscript,
 % and will typically save some space.
 \usepackage{microtype}
 
+% This is also not strictly necessary, and may be commented out.
+% However, it will improve the aesthetics of text in
+% the typewriter font.
 \usepackage{inconsolata}
 \usepackage{booktabs}
 \usepackage{amssymb}
@@ -53,7 +54,7 @@
 %
 % and set <dim> to something 5cm or larger.
 
-\title{Assessing the Effectiveness of Replies to Hateful Content\\at Stopping the Spread of Hatred}
+\title{Hate Cannot Drive out Hate:\\Forecasting Conversation Incivility of Replies to Hateful Content}
 
 % Author information can be set in various styles:
 % For several authors from the same institution:
@@ -72,1144 +73,853 @@
 %         Author 3 \\ Address line \\ ... \\ Address line}
 
 \author{First Author \\
-  Affiliation / Address line 1 \\
-  Affiliation / Address line 2 \\
-  Affiliation / Address line 3 \\
-  \texttt{email@domain} \\\And
-  Second Author \\
-  Affiliation / Address line 1 \\
-  Affiliation / Address line 2 \\
-  Affiliation / Address line 3 \\
-  \texttt{email@domain} \\}
+	Affiliation / Address line 1 \\
+	Affiliation / Address line 2 \\
+	Affiliation / Address line 3 \\
+	\texttt{email@domain} \\\And
+	Second Author \\
+	Affiliation / Address line 1 \\
+	Affiliation / Address line 2 \\
+	Affiliation / Address line 3 \\
+	\texttt{email@domain} \\}
 
 \begin{document}
-\maketitle
-\begin{abstract}
-User-generated counter hate speech is a promising means to combat hate speech,
-but questions about effectiveness linger.
-We argue that what matters is stopping hatred---counter hate speech that elicits more hate is counterproductive.
-This study investigates what replies to hate may stop the spread of hatred by assessing the effectiveness through following conversations. 
-The effectiveness is measured based on the discourse following a reply: number of messages and how many are hateful.
-A linguistic analysis draws insights into 
-the language of highly, somewhat, and barely effective replies.
-Experimental results show that forecasting effectiveness at stopping hate based on language is challenging.
-We close with a qualitative analysis shedding light into the most common errors made by the best model.
-\end{abstract}
-
-\section{Introduction}
-The pervasive problem of online hate speech has motivated
-researchers to investigate methods for mitigating hatred.
-For example, hate speech detection has received considerable attention~\cite{schmidt-wiegand-2017-survey,10.1145/3232676}. 
-Counter hate speech, which is a ``direct response that counters hate speech''~\cite{DBLP:conf/icwsm/MathewSTRSMG019},
-is a remedy to address hate speech~\cite{richards2000counterspeech}. 
-Unlike content moderation,
-counter hate does not interfere with the principle of free and open public spaces for debate~\cite{DBLP:conf/icwsm/MathewSTRSMG019,schieb2016governing,chung-etal-2019-conan}.
-
-\begin{figure}
-	\small
-	\centering
-	\begin{tabular}{@{}p{\columnwidth}@{}}
-		\toprule
-		Hateful post:
-		\emph{Just curious how you can identify with a movement which has essentially become a hate group full of crazy feminists.}  \\ \addlinespace
-		(Ineffective) counter hate post:
-		\emph{Come on man, most feminists are ok. Hate group? how can you use such a strong term?}  \\ \addlinespace
-		Hateful post (after ineffective counter hate speech):
-		\emph{No, it’s not strong. Don’t lie through your teeth. Let me know when you want to talk, c**t.} \\ 
-		\bottomrule
-	\end{tabular}
-	\caption{
-		An excerpt from a Reddit conversation.
-		The second post contains counter hate speech but it is ineffective at stopping the hatred.
-		While it may not be the cause, the counter hate post elicits additional hate.
-		Indeed, the third post escalates the hate with respect to the original hateful post.
-	}
-	\label{f:problem-example}
-\end{figure}
-
-Social media platforms such as Facebook have started counter hate speech programs.\footnote{\url{https://counterspeech.fb.com/en/}} 
-Recently, the NLP community has contributed several corpora with counter hate content
-generated on-demand by crowdworkers~\cite{DBLP:conf/icwsm/MathewSTRSMG019,qian-etal-2019-benchmark} or trained operators~\cite{chung-etal-2019-conan}.
-
-Researchers have used these corpora for counter hate speech detection~\cite{DBLP:conf/icwsm/MathewSTRSMG019} and generation~\cite{tekiroglu-etal-2020-generating,fanton-etal-2021-human,zhu-bhat-2021-generate}.
-These and other previous efforts (Section \ref{s:related_work}) make the following assumption:
-counter hate speech is an effective solution to address hate speech.
-In other words, they assume that counter hate speech can stop---or at least mitigate---hatred.
-While intuitive, we are not aware of strong evidence supporting this assumption.
-Consider the Reddit conversation in Figure \ref{f:problem-example}.\footnote{The examples in this paper contain hateful content. We cannot avoid it due to the nature of our work.}
-The first post is hateful towards feminists in general. 
-The second post is a strong counter hate argument if we ignore the follow-up conversation.
-As strong as it might be, however, it is ineffective: the next post escalates the hateful content further by attacking the author.
-
-In this paper, we propose to analyze the effectiveness of replies to hateful content at stopping hatred.
-We do not limit ourselves to focusing on counter hate speech. 
-Rather, we analyze the characteristics of all replies with varying degrees of effectiveness. 
-Regardless of the content---short or long, offensive or polite, well-argued or fatally flawed from a logic standpoint---we consider a reply effective if the discourse that follows is primarily not hateful.
-Our rationale is that what matters is preventing hateful content from spreading rather than coming up with elaborate counter hate arguments.
-Further, we argue that looking at genuine online discourse and assessing what comments elicit additional hateful content---even if they are well-meaning and polished counter hate arguments---is a worthwhile goal.
-
-The complexity of discourse dynamics as well as the existence of unquantifiable outside influences (e.g.,user's mood) make analysis of effectiveness difficult from a causal perspective~\cite{garland2022impact}. 
-In this study, we make no causal claims and take a more empirical approach to look at the relations between the use of language and the degree of non-hatefulness in the following discourse, which is defined as the effectiveness of stopping hatred. 
-The work presented here could inspire actionable knowledge to prevent the spread of hate---a challenging goal as
-hate networks often have rapid rewiring and self-repairing mechanisms~\cite{johnson2019hidden}.
-Our approach could completement current studies on counter hate speech detection and generation by 1) investigating a rich source of language replies to hate and 2) understanding the reply language with varying degrees of effectiveness, which could provide insights about counter speech strategies and guidance for manually compiling counter hate arguments.
-
-
-We study this problem with a new dataset of Reddit conversations.\footnote{Data and code available at anonymous.link}
-For the metric to measure effectiveness, 
-following previous studies that consider hateful messages (either how many or a combined hate score) ~\cite{DBLP:conf/icwsm/LiuGHC18,DBLP:conf/kdd/DahiyaSSGCEMB021,garland2022impact}, we also take the number of non-hateful messages into account.
-The metric is verified to be more in line with users' perception of effectiveness. 
-For example, a reply to hateful content followed by five hateful posts is less effective at stopping hatred than one followed by one hateful post
-despite the proportion of hateful posts after both replies are the same.
-Using the Reddit dataset and the proposed metric on effectiveness,
-we first conduct a linguistic analysis to identify the language of replies to hateful posts with varying degrees of effectiveness. 
-Then, we experiment with classifiers to predict the level of effectiveness. 
-Our models obtain modest results in identifying whether a reply is highly, somewhat or barely effective, while achive reasonably good performance in identifying top highly/barely effective replies. 
-Finally, we present a qualitative analysis on the most common error types by our best model.
-We answer the following questions in this study:
-\begin{compactenum}
-	\item Are all replies to hateful posts equally effective at stopping hatred? (they aren't);
-	\item Do highly, somewhat, and barely effective replies use different language? (they do);
-	\item Do models to assess the effectiveness of a reply benefit from having access to the hateful post in addition to the reply? (they do);
-	\item When differentiating between the top-$k$ most and least effective replies,
-	is it true that the smaller the $k$ the easier the task? (it is).
-\end{compactenum}
-
-
-\section{Related Work}
-\label{s:related_work}
-\paragraph{Hate speech}
-has been an active research area in recent years~\cite{fortuna2018survey}. 
-Most prior work focuses on detecting whether existing content is hateful.
-A few corpora have been curated for hate speech detection from diverse sources such as
-Twitter~\cite{waseem-hovy-2016-hateful, hateoffensive},
-Yahoo!~\cite{nobata2016abusive},
-Fox News~\cite{gao-huang-2017-detecting},
-Gab~\cite{DBLP:conf/aaai/MathewSYBG021},
-and Reddit~\cite{qian-etal-2019-benchmark}. 
-
-There are several efforts on forecasting whether online content will result in additional hateful content.
-\citet{10.1145/2998181.2998213} build models to predict whether
-a moderator will flag a post for removal.
-\citet{zhang-etal-2018-conversations} predict whether a comment-reply pair at the very beginning of a conversation will lead to a personal attack.
-\citet{DBLP:conf/icwsm/LiuGHC18} conduct a study to forecast whether an Instagram post will receive more than $n$ hateful comments.
-\citet{DBLP:conf/kdd/DahiyaSSGCEMB021} use a tweet and a few of the initial replies to forecast the hate score of upcoming replies.
-They calculate hate score by adding the probability from a toxicity classifier and the presence of hate words.
-These previous works provide different methods to measure hate in following discourses. 
-Unlike them, we focus on the effectiveness of a reply to hateful content at stopping hatred.
-Estimating future hate is only a component of estimating effectiveness: non-hateful content is also a good indicator of effectiveness at stopping hate.
-
-
-\paragraph{Counter hate speech}
-Existing studies on counter hate speech mainly focus on counter hate speech detection~\cite{DBLP:conf/icwsm/MathewSTRSMG019,chung-etal-2019-conan,he2021racism,garland-etal-2020-countering} 
-and generation~\cite{tekiroglu-etal-2020-generating,fanton-etal-2021-human,zhu-bhat-2021-generate}. 
-There are also efforts to classify counter hate speech into fine-grained categories~\cite{DBLP:conf/icwsm/MathewSTRSMG019,chung-etal-2021-multilingual}. 
-
-The difficulty of building large corpora for counter hate speech is a substantial burden.
-\citet{he2021racism} use a collection of keywords relevant to COVID-19 and create a dataset with 359 tweets countering hate speech
-toward the Asian community.
-The size of their dataset, however, is small (2k). 
-\citet{DBLP:conf/icwsm/MathewSTRSMG019} work with hateful videos towards groups
-and counter hate content from the video comments.
-Their dataset does not specify the hateful content countered in the comments, making it difficult to understand the counter hate content.
-\citet{chung-etal-2019-conan} collect synthetic counter hate speech generated on-demand by trained operators.
-Compared to genuine counter hate speech written by regular people out of their own desires and motivations,
-synthetic counter hate speech is not as rich (e.g., \emph{This kind of language is inappropriate and should be avoided}).
-Rather than defining then addressing the detection or generation of counter hate speech,
-we analyze user-generated replies to understand the language that stops the spread of hatred \emph{in real online conversations}.
-The effectiveness is computed based on the following discourses, which enables us to bypass the burden of manual annotations and study replies to hateful posts in a much larger scale. 
-
-
-Small-scale user studies have been conducted to investigate the effectiveness of counter hate speech by comparing the outcomes from a control group with the treatment group that has received interventions~\cite{munger2017tweetment,hangartner2021empathy,bilewicz2021artificial}. 
-The only large-scale work is by \citet{garland2022impact}.
-They work with German tweets and estimate effectiveness at stopping hatred by comparing the 
-average hate scores of all content before and after.
-Unlike them, 
-we 
-(a) propose a new metric to calculate the effectiveness of stopping hatred as opposed to the average hate scores, 
-(b) emphasize the differences in the use of language based on their effectiveness,
-and
-(c) explore models to predict varying degrees of effectiveness. 
-
-
-\section{A Metric for Measuring Effectiveness at Stopping Hatred} %.Measuring Effectiveness}
-\label{s:metric}
-We propose a new metric to measure how effective a reply $r$ to hateful content is at stopping the hatred.
-Our metric consists of two main components: popularity and hatefulness.
-Popularity, denoted $P(r)$, refers to the number of comments published after $r$.
-Hatefulness, denoted $H(r)$, refers to the number of comments published after $r$ which are hateful.
-Intuitively, effective replies will elicit more replies, i.e., higher popularity, but with fewer hateful comments, i.e., less hatefulness.  
-We use a parameter $\alpha$ to adjust the weight of $P(r)$ and $H(r)$ in their contribution to the metric. The larger $alpha$ is, the more important popularity is in the evaluation of effectiveness, i.e., a few non-hateful comments can neutralize the effect of one hateful comment. 
-Additionally, we set a parameter $\lambda$ to give a "reward" for cases that $r$ does not receive any hateful comments in the following discourse. 
-It is assumed that replies with no following hateful comments are more encouraged according to previous studies, thus given a "reward" to the effectiveness score. 
-The greater $c$ is, the more "reward" is given to cases when there are no hateful follow-up comments. In other words, more non-hateful follow-up comments are needed to neutralize one hateful comment.
-
-We formally define the effectiveness score of $r$ as follows:
-$$S(r) = \alpha P(r) - (1-\alpha) H(r) + \lambda$$
-Where
-\[
-\lambda =
-\begin{cases}
-	c, & \text{if } H(r) = 0\\
-	0,              & \text{if } H(r) > 0
-\end{cases}
-\]
-
-The next section describes an application of this metric using online content from Reddit
-and discusses a selection of the parameters $\alpha$ and $\lambda$ and the manual validation based on the dataset. 
-
-%We first describe our procedure to identify \emph{Hate}, and to construct (\emph{Hate}, \emph{Reply}) pairs,
-%where both \emph{Hates} and \emph{Replys} are Reddit comments in English. 
-%We then describe our metrics to measure the effectiveness of each \emph{Reply}.
-%We finally perform a manual validation of our proposed method.
-%Our corpus allows us to predict the effectiveness of a \emph{Reply} in mitigating online hate.
-
-\section{A Corpus of Online Hate, Replies, and their Effectiveness at Stopping Hate}
-\label{s:corpus}
-
-We choose Reddit as the starting point for our corpus.
-The PushShift API makes it possible to retrieve whole conversation threads seamlessly.\footnote{\url{https://pushshift.io/api-parameters/}}
-As the prevalence of online hate in the wild is very low (0.1\% in English language social media~\cite{vidgen-etal-2019-challenges}), many studies use keyword sampling to increase the chances of finding hateful content. 
-Keywords, however, may introduce topic and author biases~\cite{wiegand-etal-2019-detection,vidgen-etal-2021-introducing}. 
-In this study, we use community-based sampling and identify
-%, similar to \citet{qian-etal-2019-benchmark} and \citet{vidgen-etal-2021-introducing}. 
-%We identify
-35 subreddits (see the full list in Appendix \ref{sec:appendix_data}) that are thought to be hateful~\cite{qian-etal-2019-benchmark,guest-etal-2021-expert,vidgen-etal-2021-introducing}. 
-This includes subreddits such as \textit{r/MensRights},  \textit{r/PurplePillDebate}, \textit{r/ImGoingToHellForThis}, and \textit{r/Seduction}.
-We retrieve a total of 1,382,596 comments from 5,325 submissions.
-
-The next steps are to 
-(a)~identify the comments that are hateful and their replies~(Section \ref{ss:identify}),
-and
-(b)~assess how effective the replies are at stopping hatred~(Section \ref{ss:assess}).
-As we shall see, the second step requires identifying hateful content in the comments following the reply.
-
-\subsection{Identifying Hate Comments and Their Replies}
-\label{ss:identify}
-We identify hateful content in the 1,382,596 coments using a pre-trained hate speech classifier \cite{DBLP:journals/corr/abs-1907-11692} with the corpus by~\citet{qian-etal-2019-benchmark}
-and
-the implementation by~\citet{phang2020jiant}.
-We made this choice for several reasons.
-First, the corpus annotates Reddit comments as hateful or not hateful, the same domain we work with.
-Second, the classifier obtains outstanding results: 0.93 F1.
-In a more strict evaluation using Cohen's $\kappa$, we obtain $\kappa=0.83$ between the predictions and gold annotations in the test set.
-Note that $\kappa$ coefficients above $0.80$ indicate (almost) perfect agreement~\cite{artstein2008inter}.
-In other words, predictions of hate posts are reliable enough to be considered as ground truth.
-
-\begin{comment}
-%way too many roes to include this in the paper
-\begin{table}
-\small
-\begin{tabular}{lrrr}
-\toprule
-& \#hate & Avg. replies & Avg. hate after \\ \midrule
-subreddit1 & 0 & 0 & 0 \\
-\\ \bottomrule
-\end{tabular}
-\caption{Number of hate comments in each subreddit we work with,
-average number of replies to each hate comment,
-and average number of comments published after the reply.
-Summary sentence. Summary sentence. Summary sentence. Summary sentence.}
-\label{t:counts}
-\end{table}
-\end{comment}
-
-After automatically identifying hateful comments, we pair
-(a) each hateful comment with each of its direct replies
-and
-(b) each reply to a hateful comment with all future comments in the same thread.
-We found 20,286  hate comments in the 35 subreddits we work with.
-On average, a hate comment has 1.50 direct replies,
-and there are 1.94 comments published after each reply to hate.
-
-%To construct (\emph{Hate}, \emph{Reply}) pairs, we first set about identifying the \emph{Hate}. 
-%The first dataset we utilize is from \citet{qian-etal-2019-benchmark}, which has 22k labeled Reddit comments as hateful or non-hateful. 
-%To train a toxicity classifier, we use an implementation by \citet{phang2020jiant} which is built on top of the RoBERTa transformer . 
-%The network architecture as well as the train test split are detailed in Section \ref{s:experiments}.
-%We opted for the model for a number of reasons. 
-%First, it is trained on Reddit comments. 
-%Second, the model achieves outstanding performance (weighted F1: 0.93). 
-%Third, the cohen’s $\kappa$ coefficients reaches 0.83 between the model predictions and ground truth on the 2,549 test split; coefficients above 0.80 are considered (nearly) perfect agreement . Therefore, it becomes possible to automatically identify each comment as hateful or non-hateful. 
-
-
-\subsection{Assessing Effectiveness at Stopping Hatred}
-\label{ss:assess}
-The metric to measure the effectiveness of a reply $r$ at stopping hate requires us to calculate
-how many comments are published after $r$ (popularity)
-and how many of those are hateful (hatefulness).
-Popularity is a simple count of the comments published after $r$.
-To increase recall, we calculate hatefulness based on the output of three classifiers.
-We build three models by training the same architecture as that in Section \ref{ss:identify} with the corpus by \citet{qian-etal-2019-benchmark}
-and two additional corpora~\cite{hateoffensive,vidgen-etal-2021-introducing}.
-We consider a comment published after a reply as hateful if any of the three classifiers predicts \emph{hate}. 
-
-%We use marjority voting and label a comment as hateful if at least two classifiers predict it to be hateful.
-
-After calculating popularity and hatefulness for each reply,
-calculating the effectiveness score $S(r)$ is straightforward.
-We experiment with $\alpha = 0.2$, as we believe that hateful content is more critical and several non-hateful messages are needed to neutralize hateful content in Reddit.
-The parameter $\lambda$ is set to a constant $c= 0.8$ when there is no hateful comments after $r$.
-%Here are two examples: 
-%\begin{compactitem}
-%	\item If there are ten comments after $r$ and none of them are hateful ($P(r)=10$, $H(r)=0$), the score is $S(r)=2.8$.
-%	\item If there are three comments after $r$ and two of them are hateful ($P(r)=3$, $H(r)=2$), the score is $S(r)=-1$.
-%\end{compactitem}
-We do not claim that our setting is the only option or the best one. It's noted that absolute effectiveness scores are not as important as relative values.
-In the following section, we will present manual validation results to show the selection of parameters $\alpha$ and $\lambda$ is reasonable. 
-
-We also use the scores to group all replies into the following categories:
-\begin{compactitem}
-	\item \emph{Highly} effective if $S(r) > c$;
-	\item \emph{Somewhat} effective if $S(r) = c$; and
-	\item \emph{Barely} effective if $S(r) < c$.
-\end{compactitem}
-
-We will refer to this grouping (highly, somewhat or barely) as the effectiveness level of a reply.
-Note \emph{Barely} effective reply always has at least one hateful follow-up comments, 
-while
-\emph{Highly} effective reply usually has no hateful follow-up comments, or even it has, there are enough non-hateful comments to neutralize the few hateful ones.
-Our main focus is exploring the differences in the use of language between \emph{Highly} effective and \emph{Barely} effective replies (Section \ref{s:corpus_analysis} and \ref{s:experiments}).
-
-\subsection{Manual Validation}
-We manually validate the soundness of our metric with a sample of 500 replies (250 highly effective and 250 barely effective).
-First, we select Reddit snippets containing
-the reply, 
-the hateful comment it replies to, 
-and all comments published after the reply.
-Second, we pair snippets with highly effective replies and snippets with barely effective replies (250 pairs).
-Third, we show the snippets to an annotator
-and ask her which one of the two replies is more effective at stopping hatred.
-The annotator agrees with the label obtained by the effectiveness scores on 91.6\% of the pairs,
-and Cohen's $\kappa$ is 0.83, which is considered (almost) perfect.
-\textcolor{red}{One to two sentences to explain why somewhat effective is not evaluated}
-
-\begin{comment}
-
-To construct (\emph{Hate}, \emph{Reply}) pairs, we first set about identifying the \emph{Hate}. 
-The first dataset we utilize is from \citet{qian-etal-2019-benchmark}, which has 22k labeled Reddit comments as hateful or non-hateful. 
-To train a toxicity classifier, we use an implementation by \citet{phang2020jiant} which is built on top of the RoBERTa transformer \cite{DBLP:journals/corr/abs-1907-11692}. 
-The network architecture as well as the train test split are detailed in Section \ref{s:experiments}.
-We opted for the model for a number of reasons. 
-First, it is trained on Reddit comments. 
-Second, the model achieves outstanding performance (weighted F1: 0.93). 
-Third, the cohen’s $\kappa$ coefficients reaches 0.83 between the model predictions and ground truth on the 2,549 test split; coefficients above 0.80 are considered (nearly) perfect agreement \cite{artstein2008inter}. Therefore, it becomes possible to automatically identify each comment as hateful or non-hateful. 
-Though the precision of this toxicity classifier is high, the recall is low.
-To ensure both precision and recall high, we retain the same network architecture and train another two toxicity classifiers using datasets from \citet{hateoffensive} and \citet{vidgen-etal-2021-introducing}.
-We use marjority voting and label a comment as hateful if at least two classifiers predict it to be hateful.
-
-We create a (\emph{Hate}, \emph{Reply}) pair using the hateful comment as the \emph{Hate} and each of its direct replies as the \emph{Reply}. 
-For each (\emph{Hate}, \emph{Reply}) pair, we further identify each of their \emph{Futures} as hateful or non-hateful. 
-This time we label a comment in the \emph{Futures} as hateful if any of the three classifiers predicts it as hateful to ensure the precision of non-hateful comments. 
-
-
-We set a new metrics to estimate the effectiveness of each \emph{Reply} $\mathit{r}$ by taking account into both \emph{popularity} and \emph{nonhatefulness}. 
-The \emph{popularity}, denoted as $\mathit{P(r)}$, refers to the number of total \emph{Futures}. 
-The \emph{nonhatefulness}, denoted as $\mathit{H(r)}$, refers to the number of hateful comments in the \emph{Futures}. 
-
-The effectiveness score $\mathit{S(r)}$ is measured as:
-\begin{equation*}
-S(r) = \alpha H(r) + (1-\alpha) P(r)
-\end{equation*}
-
-We set the $\mathit{H(r)}$ as 1 when there are no hateful \emph{Futures}, and $\mathit{-n}$ otherwise, where $\mathit{n}$ is the number of hateful \emph{Futures}.
-The $\alpha$ is set as 0.8 for a few reasons: 1) we consider \emph{nonhatefulness} more important, and 2) we find the chosen of $\alpha$ doesn't affect the pool of polarized instances when we experiment with different $\alpha$ \(\in\) [0.6, 0.9].
-For each \emph{Reply} $\mathit{r}$, we calculate its effectiveness score $\mathit{S(r)}$ based on [$\mathit{P(r)}$, $\mathit{H(r)}$]. Here are three examples:
-\begin{compactitem}
-\item $\mathit{S(r)}$ = 2.8: $\mathit{r}$ ([10, 1]) is followed by 10 \emph{Futures} and none of them are hateful;
-\item $\mathit{S(r)}$ = 0.8: $\mathit{r}$ ([0, 1]) receives no \emph{Futures}; and
-\item $\mathit{S(r)}$ = -1.0: $\mathit{r}$ ([3, 2]) has 3 \emph{Futures} and 2 out of the 3 are hateful.
-\end{compactitem}
-
-We finally sort \emph{Replys} on their $\mathit{S(r)}$ and group them into three effectiveness levels:
-\begin{compactitem}
-\item the most effective 25\%: Most ($\mathit{S(r)}$ > 0.8); 
-\item the least effective 25\%: Least ($\mathit{S(r)}$ < 0.8);
-\item and the remaining: Neutral ($\mathit{S(r)}$ = 0.8). 
-\end{compactitem}
-We include (for Most) or remove (for Least) all the comments that fall exactly at the score on the border.
-
-\paragraph{Manual validation} 
-We randomly selected 500 \emph{Replys}, 
-half of them are from Most 
-and 
-the other half are from Least.
-Each \emph{Reply} has its \emph{Hate} to as well as all of its \emph{Futures}.
-We pair one Most with one Least and randomly shuffle their orders.
-This results in 250 (\emph{Reply\_A}, \emph{Reply\_B}) pairs and their regarding labels indicating which one out of the pair is more effective.
-One graduate student independently work on our task to pick the more effective one out of each (\emph{Reply\_A}, \emph{Reply\_B}) by looking at their \emph{Futures}.
-The agreement between the annotations and the ground truth is 91.6\%.
-The cohen's $\kappa$ coefficients is 0.83, which is considered (nearly) perfect agreement \cite{artstein2008inter}.  
-This indicates that our labeling process is reliable. 
-\end{comment}
-
-
-\section{Corpus Analysis} 
-\label{s:corpus_analysis}
-
-\begin{table}
-	\centering
-	\begin{tabular}{lrrrr}
-		\toprule
-		& \multicolumn{3}{c}{Effectiveness level} \\ \cmidrule{2-4} 
-		\multicolumn{1}{c}{} & Highly & Somewhat & Barely & All \\
-		\hline
-		\addlinespace[1pt]
-		\# & 8,884 & 15,171 & 6,430 & 30,485 \\ 
-		\% & 29.1 & 49.7 & 21.2 & 100 \\
-		\bottomrule
-	\end{tabular}
-	\caption{Label distribution of effectiveness levels.
-		%in our corpus after grouping effectiveness scores into three categories.
-		Almost half of replies to hateful comments are somewhat effective.
-		There are substantially more highly effective than barely effective replies (29.1\% vs. 21.2\%).}
-	\label{t:label-distribution}
-\end{table}
-
-\begin{table*}[t]
-	\small
-	\centering
-	\begin{tabular}{lr}
-		\toprule
-		
-		\multicolumn{2}{l}{Hate comment: \emph{All women are feminazis. Emotional, hormonal, %violent,
-				and anti-men. It's how they were born.}} \\
-		\multicolumn{2}{l}{Reply $r$: \emph{"all women/men are something." This statement is sexist.}} \\ \addlinespace
-		Effectiveness score $S(r) = 5.2$, Highly effective &
-		Popularity($r$) = $22$, Hatefulness($r$) = $0$ \\ \midrule
-		
-		\multicolumn{2}{l}{Hate comment: \emph{You are a dumb motherf**ker. Please get off Reddit.}} \\
-		\multicolumn{2}{l}{Reply $r$: \emph{Stop feeding him. This is the reaction he was looking for and you're indulging him.}} \\ \addlinespace
-		Effectiveness score $S(r) = 0.8$, Somewhat effective & 
-		Popularity($r$) = $0$, Hatefulness($r$) = $0$ \\ \midrule
-		
-		\multicolumn{2}{l}{Hate comment:\emph{ Lol this thread is full of internet losers like you.}} \\
-		\multicolumn{2}{l}{Reply $r$: \emph{Ha! You don't even know me little man.}} \\ \addlinespace
-		Effectiveness score $S(r) = -16.4$, Barely effective &
-		Popularity($r$) = $33$, Hatefulness($r$) = $26$ \\ \bottomrule
-	\end{tabular}
+	\maketitle
+	\begin{abstract}
+		User-generated counter hate speech is a promising means to combat hate speech,
+		but questions about whether it can stop incivility in follow-up conversations linger.
+		We argue that what matters is stopping incivility from emerging in follow-up conversations---counter hate speech that elicits more incivility is counterproductive.
+		In this study, we introduce the task of predicting incivility in the follow-up conversation for a reply to hateful content.
+		The conversation incivility is measured based on the discourse following a reply: number of civil and uncivil comments published by each user.
+		A linguistic analysis draws insights into the differences in the language of replies with highly and barely incivility.
+		Experimental results show that forecasting incivility is challenging.
+		We close with a qualitative analysis shedding light into the most common errors made by the best model.
+	\end{abstract}
 	
-	\caption{Examples from our corpus and their effectiveness levels.
-		We also include the Popularity and Hatefulness.}
-	\label{t:corpus-examples}
-\end{table*}
+	\section{Introduction}
+	The pervasive problem of online hate speech has motivated
+	researchers to investigate methods for mitigating hatred.
+	For example, hate speech detection has received considerable attention~\cite{schmidt-wiegand-2017-survey,10.1145/3232676}. 
+	Counter hate speech, which is a ``direct response that counters hate speech''~\cite{DBLP:conf/icwsm/MathewSTRSMG019},
+	is a remedy to address hate speech~\cite{richards2000counterspeech}. 
+	Unlike content moderation,
+	counter hate does not interfere with the principle of free and open public spaces for debate~\cite{DBLP:conf/icwsm/MathewSTRSMG019,schieb2016governing,chung-etal-2019-conan}.
+	
+	\begin{figure}
+		\small
+		\centering
+		\begin{tabular}{@{}p{\columnwidth}@{}}
+			\toprule
+			Hateful post:
+			\emph{Just curious how you can identify with a movement which has essentially become a hate group full of crazy feminists.}  \\ \addlinespace
+			(Ineffective) counter hate post:
+			\emph{Come on man, most feminists are ok. Hate group? how can you use such a strong term?}  \\ \addlinespace
+			Hateful post (after ineffective counter hate speech):
+			\emph{No, it’s not strong. Don’t lie through your teeth. Let me know when you want to talk, c**t.} \\ 
+			\bottomrule
+		\end{tabular}
+		\caption{
+			An excerpt from a Reddit conversation.
+			The second post contains counter hate speech but it elicits additional uncivil behaviors.
+			Indeed, the third post escalates the hate with respect to the original hateful post.
+		}
+		\label{f:problem-example}
+	\end{figure}
+	
+	Social media platforms like Facebook have started counter hate programs.\footnote{\url{https://counterspeech.fb.com/en/}} 
+	Recently, the NLP community has focused on counter hate speech detection~\cite{DBLP:conf/icwsm/MathewSTRSMG019,yu-etal-2022-hate} and generation~\cite{tekiroglu-etal-2020-generating,fanton-etal-2021-human,zhu-bhat-2021-generate}.
+	These and other previous efforts (Section \ref{s:related_work}) make the following assumption:
+	counter hate speech is an ideal solution to stop or at least mitigate online incivility.
+	While intuitive, we are not aware of strong evidence supporting this assumption.
+	Consider the Reddit conversation in Figure \ref{f:problem-example}.\footnote{The examples in this paper contain hateful content. We cannot avoid it due to the nature of our work.}
+	The first post is hateful towards feminists in general. 
+	The second post is a strong counter hate argument if we ignore the follow-up conversation.
+	As strong as it might be, however, it elicits additional incivility: the next post escalates the hateful content further by attacking the author.
+	Even if human intuitions are consistent with ground truth at most times, could we endow artificial systems to depict the future trajectory of conversations for replies to hateful content?
+	
+	In this paper, we aim to computationally forecast conversation incivility of replies to hateful content.
+	We do not limit ourselves to focusing on counter hate speech. 
+	Rather, we look at all replies with varying conversation outcomes. 
+	Regardless of the content---short or long, offensive or polite, well-argued or fatally flawed from a logic standpoint---we consider the outcome of a reply is civil if the discourse that follows is primarily not uncivil.
+	Our rationale is that what matters is preventing uncivil content from emerging in the follow-up conversation rather than coming up with elaborate counter hate arguments.
+	Further, we argue that looking at genuine online discourse and assessing what comments elicit additional uncivil behaviors---even if they are well-meaning and polished counter hate arguments---is a worthwhile goal.
+	
+	We focus on incivility as the conversation outcome and investigate how linguistic discourse is tied to the future trajectory of a conversation. 
+	Recent studies in measuring conversation incivility use number or ratio of uncivil comments~\cite{DBLP:conf/icwsm/LiuGHC18,10.1145/3366423.3380273,DBLP:conf/kdd/DahiyaSSGCEMB021,garland2022impact}.
+	In contrast, we quantify conversation incivility by also considering thread lengths~\cite{tsagkias2009predicting,Yano_Smith_2010,artzi-etal-2012-predicting} and user re-entry behaviors~\cite{10.1145/2433396.2433401}, which build the bridge between works on conversation modeling in general and in incivility domains.
+	Additionally, the work presented here could complement current studies on counter hate speech by 
+	investigating a richer source of replies to hate 
+	and 
+	providing insights into counter hate strategies.
+	
+	We study this problem with a new dataset of Reddit conversations.\footnote{Data and code available at anonymous.link}
+	We propose a new metric that takes the number of both uncivil and civil comments into account.
+	Our metric also consider whether the follow-up comments are from many different "drive-by" commenters or from relatively few people with repeated engagement~\cite{10.1145/2433396.2433401}. 
+	We argue that our metric is more sound in many scenarios.
+	For example, for a reply to hateful content followed by five uncivil posts, the conversation incivility is higher than that followed by only one uncivil post,
+	while the ratio of uncivil comments are the same.
+	For the same reply, if the five uncivil posts are from different users, the conversation incivility is higher than that where all of them are from the same user,
+	while the number of uncivil comments are the same.
+	
+	Armed with the Reddit conversations and our metric,
+	we first conduct a linguistic analysis to analyze the characteristics of replies to hateful posts with varying degrees of conversation incivility (namely highly, somewhat or barely incivility).
+	We then experiment with classifiers to identify whether a reply will be highly, somewhat or barely incivility.
+	Our models obtain modest results,
+	and we present a qualitative analysis describing the most common error types.
+	
+	We answer the following questions:
+	\begin{compactenum}
+		\item Are conversation incivility of all replies to hateful posts equal? (they aren't);
+		\item Do replies followed by highly, somewhat, and barely conversation incivility use different language? (they do);
+		\item Do models to assess the conversation incivility benefit from having access to the hateful post in addition to the reply? (they do);
+		\item When differentiating between the top-$k$ most and least uncivil replies,
+		is it true that the smaller the $k$ the easier the task? (it is).
+	\end{compactenum}
+	
+	
+	\section{Related Work}
+	\label{s:related_work}
+	\paragraph{Hate speech}
+	has been an active research area in recent years~\cite{fortuna2018survey}. 
+	Most prior work focuses on detecting whether existing content is hateful.
+	A few corpora have been curated for hate speech detection from diverse sources such as
+	Twitter~\cite{waseem-hovy-2016-hateful, hateoffensive},
+	Yahoo!~\cite{nobata2016abusive},
+	Fox News~\cite{gao-huang-2017-detecting},
+	Gab~\cite{DBLP:conf/aaai/MathewSYBG021},
+	and Reddit~\cite{qian-etal-2019-benchmark}.
+	
+	There are several efforts on forecasting whether online content will result in additional uncivil behaviors. 
+	Incivility is a broader concept than hate speech, which includes name-calling, personal attacks, racism/sexism, abusive languages, and vulgarity~\cite{sadeque-etal-2019-incivility,davidson-etal-2020-developing}.
+	\citet{10.1145/2998181.2998213} predict whether a moderator will flag a post for removal.
+	\citet{zhang-etal-2018-conversations} predict whether a comment-reply pair at the very beginning of a conversation will lead to a personal attack.
+	\citet{DBLP:conf/icwsm/LiuGHC18} forecast whether an Instagram post will receive more than $n$ uncivil comments.
+	\citet{DBLP:conf/kdd/DahiyaSSGCEMB021} use a tweet and a few of its replies to forecast the incivility score of upcoming replies.
+	They calculate incivility score by adding the probability from a toxicity classifier and the presence of uncivil words.
+	Similarily, our work aims to forecast conversation incivility in following discourse; 
+	however, we measure incivility by also considering civil comments as well as user re-entry behaviors
+	and 
+	we focus on replies to hateful content instead of those at the beginning of a conversation.
+	
+	\paragraph{Counter hate speech}
+	Prior work on counter hate speech has contributed several corpora with counter hate content~\cite{DBLP:conf/icwsm/MathewSTRSMG019,qian-etal-2019-benchmark,chung-etal-2019-conan,yu-etal-2022-hate}.
+	~\citet{chung-etal-2019-conan} collect synthetic counter hate speech generated on-demand by trained operators.
+	Researchers have mainly relied on this corpora for counter hate speech  generation~\cite{tekiroglu-etal-2020-generating,fanton-etal-2021-human,zhu-bhat-2021-generate,ashida-komachi-2022-towards}. 
+	Compared to genuine counter hate speech written by regular people out of their own desires and motivations, synthetic counter hate speech is not as rich (e.g., \emph{This kind of language is inappropriate and should be avoided}).
+	Also, we are unaware of the outcomes of synthetic counter hate speech in real online conversations.
+	Some user studies that investigate the outcome of counter hate speech are lack in scale, they compare the control group with the treatment group that has received interventions~\cite{munger2017tweetment,hangartner2021empathy,bilewicz2021artificial}. 
+	The only large-scale work is by \citet{garland2022impact}.
+	They work with German tweets and estimate the impact of each reply by comparing the 
+	average incivility scores of all content before and after.
+	While we are inspired by previous approaches to address online hatred, we
+	(a) analyze user-generated content that does not induce uncivil behaviors \emph{in real online conversations}, and
+	(b) measure incivility automatically and therefore bypass the burden of manual annotations.
+	
+	\paragraph{Conversational forecasting}
+	Besides conversation incivility, previous work has explored a rich source of different conversation outcomes, such as betrayal in games~\cite{niculae-etal-2015-linguistic}, success in persuading others~\cite{10.1145/2872427.2883081}, and the winner of a debate~\cite{potash-rumshisky-2017-towards}.
+	We build on prior work in modeling conversation trajectory from the structural aspects of conversation~\cite{10.1145/2433396.2433401} and complement them by also considering the linguistic aspects.
+	
+	
+	
+	\section{Measuring Conversation Incivility} %.Measuring Effectiveness}
+	\label{s:metric}
+	We propose a new metric to measure the conversation incivility of a reply $r$ to hateful content.
+	Our metric consists of two main components: uncivil behaviors $U(r)$ and civil behaviors $C(r)$ .
+	All the comments in the follow-up conversation that after a reply $r$ are from a population of unique users $P$.
+	For each user $i$ in $P$ (for $i = 1,2,...,k$), let $n_{ui}$ denote the number of uncivil comments the user $P_i$ posts, and $n_{ci}$ denote the number of civil comments.
+	Thus, uncivil behaviors $U(r)$ is measured by summing up the square root of $n_{ui}$ for all the users in the conversation after $r$.
+	Similarly, civil behaviors $C(r)$ is measure by the summation of the square root of $n_{ci}$ for all the users.
+	Intuitively, the conversation incivility of a reply $r$ is higher when there are more uncivil comments and they are from different commenters, and fewer civil comments from relatively few people.
+	We formally define the conversation incivility score of $r$ as follows:
+	$$S(r) = \alpha U(r) - (1-\alpha) C(r)$$
+	Where
+	\[
+	\begin{cases}
+		 U(r) =	\sum_{i=1}^{k} \sqrt{n_{ui}} \\
+	     C(r) =	\sum_{i=1}^{k} \sqrt{n_{ci}} 
+	\end{cases}
+	\]
+	
+	The parameter $\alpha$ determines how much weight to give to each component.
+	The smaller $\alpha$ is, the more important uncivil behaviors is (i.e., more civil comments are needed to neutralize the incivility degree of one uncivil comment).
+	We also believe the future trajectory of a conversation becomes more toxic and unhealthy if it involves a larger number of participants venting or misbehaving, and this should be treated differently from that where there are only few people with repeated engagement~\cite{10.1145/2433396.2433401}.
+	Finally, if a reply to hateful content elicits a long and civil comment thread, then it is the one that attracts a great deal of attention and promotes healthy discussions. 
+	Our metric builds on prior work on comment-volume prediction~\cite{artzi-etal-2012-predicting,10.1145/2433396.2433401} and we adapt it in modeling conversation incivility.
+	
+	
+	\section{A Corpus of Online Hate, Replies, and their Conversation Incivility}
+	\label{s:corpus}
+	We choose Reddit as the starting point for our corpus.
+	The PushShift API makes it possible to retrieve whole conversation threads seamlessly.\footnote{\url{https://pushshift.io/api-parameters/}}
+	As the prevalence of online hate in the wild is very low (0.1\% in English language social media~\cite{vidgen-etal-2019-challenges}), many studies use keyword sampling to increase the chances of finding hateful content. 
+	Keywords, however, may introduce topic and author biases~\cite{wiegand-etal-2019-detection,vidgen-etal-2021-introducing}. 
+	In this study, we use community-based sampling and identify
+	%, similar to \citet{qian-etal-2019-benchmark} and \citet{vidgen-etal-2021-introducing}. 
+	%We identify
+	41 subreddits (see the full list in Appendix \ref{sec:appendix_data}) that are thought to be hateful~\cite{qian-etal-2019-benchmark,guest-etal-2021-expert,vidgen-etal-2021-introducing}. 
+	This includes subreddits such as \textit{r/MensRights},  \textit{r/PurplePillDebate}, \textit{r/ImGoingToHellForThis}, and \textit{r/Seduction}.
+	We retrieve a total of 1,382,596 comments from 5,325 submissions.
+	
+	The next steps are to 
+	(a)~identify the comments that are hateful and their replies~(Section \ref{ss:identify}),
+	and
+	(b)~assess the conversation incivility of replies to hateful content~(Section \ref{ss:assess}).
+	As we shall see, the second step requires identifying uncivil content in the comments following the reply.
+	
+	\paragraph{Identifying Hate Comments and Their Replies}
+	\label{ss:identify}
+	We identify hateful content in the 1,382,596 comments using pre-trained models \cite{DBLP:journals/corr/abs-1907-11692} with the corpus by~\citet{qian-etal-2019-benchmark}
+	and
+	the implementation by~\citet{phang2020jiant}.
+	We made this choice for several reasons.
+	First, the corpus annotates Reddit comments as hateful or not hateful, the same domain we work with.
+	Second, the classifier obtains outstanding results: 0.93 F1.
+	In a more strict evaluation using Cohen's $\kappa$, we obtain $\kappa=0.83$ between the predictions and the gold annotations in the test set.
+	Note that $\kappa$ coefficients above $0.80$ indicate (almost) perfect agreement~\cite{artstein2008inter}.
+	In other words, the predictions of hateful posts are reliable enough to be considered as ground truth.
+	
+	After automatically identifying hateful comments, we pair
+	(a) each hateful comment with each of its direct replies
+	and
+	(b) each reply to a hateful comment with all future comments in the same thread.
+	We found 21,845  hate comments in the 41 subreddits we work with.
+	On average, a hate comment has 1.56 direct replies,
+	and there are 2.36 comments published after each reply.
 
-Table \ref{t:label-distribution} presents distribution of effectiveness levels in our corpus.
-%~(highly, somewhat or barely effective).
-Almost half of the replies to a hateful comment are somewhat effective~(49.7\%),
-and 99.3\% of them do not have any follow-up comment (popularity is 0).
-There are many highly effective replies at stopping hatred (29.1\%),
-although a substantial amount (21.2\%) are barely effective.
-We note that these percentages are encouraging, as the subreddits we work with are known to harvest conversations about hateful topics.
+	
+	\paragraph{Assessing Conversation Incivility}
+	\label{ss:assess}
+	The metric to measure the conversation incivility of a reply $r$ requires us to get
+	how many civil and uncivil comments are published after $r$ for each user.
+	The calculation of civil comments is a simple count of the civil comments.
+	Compared with hateful comments, uncivil comments include broader cases~\cite{davidson-etal-2020-developing}.
+	We therefore calculate uncivil comments based on the output of three classifiers.
+	We build three models by training the same architecture as that in Section \ref{ss:identify} with the corpus by \citet{qian-etal-2019-benchmark}
+	and two additional corpora~\cite{hateoffensive,vidgen-etal-2021-introducing}.
+	We consider a comment published after a reply as uncivil if any of the three classifiers predicts \emph{uncivil}. 
+	
+	After calculating civil behaviors and uncivil behaviors for each reply,
+	calculating the conversation incivility score $S(r)$ is straightforward.
+	We experiment with $\alpha = 0.8$, 
+	as we believe that uncivil content is more critical and several civil messages are needed to neutralize uncivil content in Reddit.
+	We do not claim that our setting is the only option or the best one. 
+	We note that absolute incivility scores are not as important as relative values.
+	We use the scores to group all replies based on quantiles (top 25\%, middle 50\%, and bottom 25\%). 
+	The categories show as following:
+	\begin{compactitem}
+		\item \emph{Highly} with $ S(r) \in [16.26,0.22) $;
+		\item \emph{Somewhat} with $ S(r) \in [0.22, -0.20) $; and
+		\item \emph{Barely} with  $ S(r) \in [-0.20, -48.76]$.
+	\end{compactitem}
 
-We show examples of each effectiveness level in Table \ref{t:corpus-examples}. 
-In the first example, the reply denounces the hate comment as sexist without getting into details or personal attacks (``[...] This statement is sexist.'').
-This strategy is a common counter hate strategy~\cite{DBLP:conf/icwsm/MathewSTRSMG019} and it is very successful: 22 comments follow the reply and none of them are hateful.
-In the second example, the reply tries to mediate the fight by persuading the author of the hate comment to stop venting (``Stop feeding him. [...] you're indulging him.'').
-There are no comments after this reply, yielding a 0.8 effectiveness score.
-It is \emph{somewhat} effective at stopping hatred---no additional hate is posted.
-In the third example,
-the reply could be considered counter hate speech as it attacks the argument in the hate comment (\emph{full of internet losers} vs. \emph{You don't even know me}).
-The reply, however, also attacks the author of the hate comment (\emph{little man}).
-This reply is not effective at stopping hate: out of 33 comments that follow the reply, 26 are hateful.
+	We refer to this grouping (highly, somewhat or barely) as the conversation incivility level of a reply.
+	Note that 95\% of replies with \emph{Somewhat} conversation incivility have no follow-up discourse ($S(r)=0$).   
+	Replies with \emph{Highly} conversation incivility always have at least one uncivil comment after $r$.
+	We will explore the differences in the use of language between replies with \emph{Highly} and \emph{Barely} conversational incivility in Section~\ref{s:corpus_analysis}.
+	
+	
+	
+	\paragraph{Manual Validation}
+	\label{ss:validation}
+	We manually validate the soundness of our metric with a sample of 500 replies (250 with highly incivility and 250 with barely incivility).
+	First, we select Reddit snippets containing 
+	(a) the hateful comment,
+	(b)	the reply,	and 
+    (c) all comments published after the reply.
+	Second, we pair snippets where the reply has highly incivility with that has barely incivility (250 pairs).
+	Third, we show the snippets to the annotators
+	and ask them which one of the two replies has higher conversational incivility.
+	We skip validating replies with somewhat incivility as most of them (95\%) have no following discourses, making the task quite easy.
+	We hire two research assistants as annotators.
+	Both annotators agree with the label obtained by the incivility scores on more than 85\% of the pairs,
+	and Cohen's $\kappa$ is above 0.70, which are considered substantial agreement.
 
+	
+	\section{Corpus Analysis} 
+	\label{s:corpus_analysis}
+	
+	Table \ref{t:label-distribution} presents distribution of conversation incivility levels in our corpus.
+	We include in the highly incivility and barely incivility all replies with the threshold incivility scores.
+	Almost half of the replies to a hateful comment have somewhat conversation incivility~(49.5\%).
+	The number of replies with highly conversation incivility (25.2\%) and barely conversation incivility (25.3\%) are very close.
+	We note that these percentages are encouraging, as these subreddits are known to harvest conversations about hateful topics.
+	
+	We show examples of each incivility level in Table \ref{t:corpus-examples}. 
+	In the first example,
+	the reply shows disagreement by attacking the author of the hate comment (\emph{little man}).
+	It leads to highly conversation incivility: 26 out of 33 comments that follow the reply are uncivil.
+	Indeed, we observe the follow-up conversation is made up of behaviors where the original authors of the hateful comment and the reply  repetitively denigrating each other.
+	In the second example, the reply uses sarcasm to stop arguing with the hateful comment  (``Have a nice day!'').
+	There are no comments after this reply, yielding a 0 incivility score.
+	It is \emph{somewhat} incivility at stopping hatred---no additional uncivil comments is posted.
+	In the third example, the reply denounces the misbehavior in the hate comment is inappropriate without getting into details or personal attacks (``[...] It is not perfectly okay.'').
+	This strategy is a common counter hate strategy~\cite{DBLP:conf/icwsm/MathewSTRSMG019} and the follow-up conversation is barely uncivil: although 3 comments are uncivil, they are posted by the same user and 29 comments from 24 users remain civil.
+	
+	\begin{table}
+		\centering
+		\begin{tabular}{lrrrr}
+			\toprule
+			& \multicolumn{3}{c}{Incivility level} \\ \cmidrule{2-4} 
+			\multicolumn{1}{c}{} & Highly & Somewhat & Barely & All \\
+			\hline
+			\addlinespace[1pt]
+			\# & 8,587 & 16,884 & 8,644 & 34,115 \\ 
+			\% & 25.2 & 49.5 & 25.3 & 100 \\
+			\bottomrule
+		\end{tabular}
+		\caption{Label distribution of incivility levels.}
+		\label{t:label-distribution}
+	\end{table}
+	
+	\begin{table}[t]
+		\small
+		\centering
+		\begin{tabular}{p{7.2cm}}
+			\toprule
+			Hate: \emph{Lol this thread is full of internet losers like you.} \\
+			Reply: \emph{Ha! You don't even know me little man.}\\ \addlinespace
+			$S(r) = 5.02$, Highly incivility\\ 	
+			\midrule
+			Hate: \emph{Too easy to trigger you maga f**ks, snowflake.} \\
+			Reply: \emph{Have a nice day!}\\ \addlinespace
+			$S(r) = 0$, Somewhat incivility\\ 					
+			\midrule
+			Hate: \emph{Trash talking is perfectly ok. He is an a**hole and clearly cannot take it for sh*t.} \\
+			Reply: \emph{It's *tolerable* under those conditions. It is not perfectly okay.}\\ \addlinespace
+			$S(r) = -3.92$, Barely incivility\\ 
+			\bottomrule
+		\end{tabular}
+		
+		\caption{Examples from our corpus and their incivility levels.
+			We also include their incivility scores.}
+		\label{t:corpus-examples}
+	\end{table}
 
-\paragraph{Linguistic insights} 
-We perform a linguistic analysis to shed light on the language people use in the replies belonging to each effectiveness level.
-We split the replies into two categories (referential: Yes, or No) depending on whether they refer to the hateful content or its author.
-As we shall see, this feature will be beneficial for training models.
-We define it as follows:
-\begin{compactitem}
-	\item Quotes. Inspired by \citet{chakrabarty-etal-2019-ampersand} and \citet{jo-etal-2020-detecting},
-	we consider that the reply quotes the hateful comment if
-	(a)~it uses the character '>' and the text that follows overlaps with the hateful comment
+		
+					% Start: Table 
+	\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+	\begin{table*}
+		\setlength{\tabcolsep}{.075in}
+		\centering
+		\small
+		\begin{tabular}{l P{.5in}P{.5in}P{.5in}P{.5in}P{.5in}P{.5in}}
+			\toprule
+			& All & Discussion & Hobby & Identity & Meme & Media\\ \midrule
+			\textbf{Textual factors}\\
+			~~~Tokens & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\underline\uparrow\underline\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ \\ 
+			~~~Negations & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\underline\uparrow$ &  $\uparrow\uparrow\uparrow$ &  $\uparrow\uparrow\uparrow$ & $\underline\uparrow\underline\uparrow\underline\uparrow$ \\
+			~~~1st person pronouns & $\uparrow\uparrow\uparrow$ & $\underline\uparrow\underline\uparrow\underline\uparrow$ & $\underline\uparrow$ &  $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\underline\uparrow\underline\uparrow$ \\
+			~~~2nd person pronouns & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ \\
+			~~~Named entity (norp) & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\underline\uparrow$ & $\underline\uparrow$ & & $\underline\uparrow$ \\
+			~~~Question marks & $\uparrow\uparrow\uparrow$ & $\underline\uparrow$ &  & $\underline\uparrow\underline\uparrow\underline\uparrow$ & $\underline\uparrow$ & $\underline\uparrow$ \\
+			~~~Quotation marks & $\uparrow\uparrow\uparrow$  & $\uparrow\uparrow\uparrow$  & $\underline\uparrow$ & $\underline\uparrow\underline\uparrow$ &  & $\underline\uparrow$ \\
+			\midrule
+			\textbf{Sentiment factors}\\
+			~~~Positive words & $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ & $\underline\downarrow\underline\downarrow\underline\downarrow$ & $\downarrow\downarrow\downarrow$ & $\underline\downarrow\underline\downarrow$ & $\underline\downarrow\underline\downarrow$ \\
+			~~~Negative words & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow$ \\
+			~~~Disgust words & $\uparrow\uparrow\uparrow$ & $\underline\uparrow\underline\uparrow\underline\uparrow$ & $\underline\uparrow\underline\uparrow\underline\uparrow$ & $\uparrow\uparrow\uparrow$  &  $\underline\uparrow$ & $\underline\uparrow$ \\
+			~~~Hatred words & $\uparrow\uparrow\uparrow$ & $\underline\uparrow$ & & $\underline\uparrow\underline\uparrow$ & &  $\underline\uparrow\underline\uparrow\underline\uparrow$ \\
+			~~~Angry words &  $\uparrow\uparrow\uparrow$ & $\underline\uparrow\underline\uparrow$ & $\underline\uparrow$ & $\underline\uparrow\underline\uparrow$ & $\underline\uparrow$ & $\underline\uparrow\underline\uparrow$ \\
+			\bottomrule
+		\end{tabular}
+		
+		\caption{Linguistic analysis comparing the replies to hateful content that have highly and barely conversation incivility.
+			We also provide results of replies in each category of subreddits.
+			Number of arrows indicate the p-value (t-test; one: $p<0.05$, two: $p<0.01$, and three: $p<0.001$).
+			Arrow direction indicates whether higher values correlate with highly (up) or barely (down) incivility. 
+			Tests that do not pass the Bonferroni correction are underlined.}
+		\label{t:linguistic}
+	\end{table*}
+	% End: Table 
+	
+	\paragraph{Linguistic insights} 
+	We perform a linguistic analysis to shed light on differences in the language people use in the replies with highly conversation incivility and barely conversation incivility.
+	As different communities vary in the topics, content, rules, etc., 
+	we further conduct analyses in each type of communities to see whether the differences between highly and barely incivility still exist.
+	The 41 subreddits are grouped into five categories based on the taxonomy from~\citet{Weld_Zhang_Althoff_2022}.
+	The five categories we are using are: \emph{Discussion}, \emph{Hobby}, \emph{Identity}, \emph{Meme}, and \emph{Media-sharing} (see Appendix~\ref{}).
+	
+	All factors we consider are based on counts of
+	(a)~textual features (top block)
 	or
-	(b)~there are at least 4 content words in common.
+	(b) sentiment words presence.
+	For quotation marks, we use the character  '>' and the text that follows overlaps with the hateful comment~\cite{chakrabarty-etal-2019-ampersand,jo-etal-2020-detecting}.
+	We check for negation cues using the list by~\citet{fancellu-etal-2016-neural}. 
+	We use spaCy to check for the mentions of named entities.\footnote{\url{https://spacy.io/usage/linguistic-features}}
+	For sentiment and cognition, we use the Sentiment Analysis and Cognition Engine (SEANCE) lexicon,
+	a tool for psychological linguistic analysis \cite{crossley2017sentiment}. 
+	Statistical tests are conducted using unpaired t-tests between the groups, of which the replies have highly or barely conversation incivility.
+	We draw several interesting insights:
+	\begin{compactitem}
+		\item Regarding textual factors for all the replies, the more tokens, negations, pronouns (1st and 2nd person), entities of nationalities or religious or political groups, question and quotation marks indicate that the reply has highly conversation incivility.
+		As negation cues are often used to dispute the hateful comment, the future trajectory of conversation has a higher chance to turn uncivil.
+		\item Regarding sentiment, there are significant differences in the uses of positive and negative words. Replies that use more hatred, disgust and angry words are more inclined to tie with a higher incivility degree in the follow-up conversations.
+		\item Although topics, content and rules vary across communities, we observe consistency in the differences between highly and barely incivility. The more 2nd pronouns referring to the author of the hateful comment and the more negative words in the replies, the higher conversation incivility they have.
+	\end{compactitem}
 	
-	%   the \emph{reply} quote a part of the \emph{Hate}, the text span in common should contain at least one word and four characters. We use the method in \citet{chakrabarty-etal-2019-ampersand} and \citet{jo-etal-2020-detecting} to identify attack relations. In Reddit, comments use direct quotes with ">" symbol to address specific content of the comment by another user. Each quote is matched with the longest sequence of sentences in the \emph{Hate} using the Levenshtein edit distance. The \emph{Reply} is also considered quote the \emph{Hate} if  at least four non-stopwords appear in both of the \emph{Reply} and \emph{Hate};
 	
-	\item Questions. We check for question marks in the reply, as \emph{questions} is a counter speech strategy \cite{chung-etal-2021-multilingual}.
 	
-	\item Negation. We check for negation cues using the list by~\citet{fancellu-etal-2016-neural},
-	as it is often used to dispute the hateful comment.
+	\section{Experiments and Results} 
+	\label{s:experiments}
 	
-	\item Second person pronouns. We check for presence of \emph{you} and \emph{your}, as it is used in the replies to refer to the author of the hateful comment.
-\end{compactitem}
-
-Table \ref{t:linguistic-analysis} in Appendix \ref{sec:appendix_ling} presents the analysis.
-All factors we consider are based on counts of
-(a)~textual features (top block)
-or
-(b) sentiment and cognition words presence.
-For sentiment and cognition, we use the Sentiment Analysis and Cognition Engine (SEANCE) lexicon,
-a tool for psychological linguistic analysis \cite{crossley2017sentiment}. 
-We combine a list of hate words\footnote{\url{https://hatebase.org/}} and profanity words\footnote{\url{https://github.com/RobertJGabriel/google-profanity-words-node-module/blob/master/lib/profanity.js}} to count the profanity words.
-
-%To investigate the differences between the language people use in different effectiveness level of \emph{Replys} (Most, Neutral, or Least), we first %analyze the components of linguistic features of \emph{Replys} using the Sentiment Analysis and Cognition Engine (SEANCE) lexicon,
-%a tool for psychological linguistic analysis \cite{crossley2017sentiment}.  
-%We combine the set of hate words with profanity words\footnote{https://github.com/RobertJGabriel/google-profanity-words-node-module/blob/master/lib/profanity.js} to count the profanity words. 
-%Statistical tests are conducted using unpaired t-tests between the groups, of which the \emph{Reply}s are Most, Neutral or Least (Table \ref{t:linguistic-analysis}). 
-%As multiple hypothesis tests are performed, we also report whether each feature passes the Bonferroni correction.
-%For each pairwise comparison, we present detailed results where the \emph{Reply}s are belong to Argue, Nonargue or both (All). 
-
-
-\paragraph{How does language differ between highly and barely effective replies?}
-The first pairwise comparison in Table \ref{t:linguistic-analysis} presents the answers to this question.
-We draw several interesting conclusions:
-\begin{compactitem}
-	\item When analyzing all the replies, the more tokens, nouns, verbs, negations, quotations and other textual factors indicate that the reply is barely effective.
-	Question marks are often part of rhetorical questions and exclamations are usually not part of well-reasoned arguments but rather personal attacks.
-	\item The textual factors are substantially different depending on whether the reply refers to the hateful comment.
-	For example, most are no longer significant (verbs, negations, quotations, etc.) and more tokens and nouns indicate that a reply is highly effective rather than barely effective when the reply does not refer to the hateful comment.
-	\item Regarding sentiment, there are significant differences in the number of negative and positive words in barely and highly effective replies. 
-	Profanity, and negative emotions (disgust, angry) are common in barely effective replies.
-\end{compactitem}
-
-
-\paragraph{What language in the replies elicits additional comments?}
-The second and third pairwise comparisons analyze the linguistic differences between highly and somewhat, barely and somewhat effective replies. 
-As there is no comments after 99\% of somewhat effective replies, these comparisons also indicate language used in the replies that elicits comments.
-
-Despite the language of highly and barely effective replies is substantially different,
-the differences between somewhat effective and either highly or barely effective replies are similar:
-more tokens, nouns, verbs, and all other textual factors in a reply indicating that it will elicit additional comments, except exclamation marks. 
-There are also a few interesting differences:
-\begin{compactitem}
-	\item Fewer exclamation marks indicate that the reply will elicit more comments that are not hateful (highly vs. somewhat).
-	\item Fewer positive words indicate that it will elicit more comments that are hateful (barely vs. somewhat).
-	\item Profanity, disgust and angry words are good indicators of whether the reply will elicit hateful comments (and thus be barely effective).
-\end{compactitem}
-
-\begin{comment}
-The second (Most vs. Neutral) and third (Least vs. Neutral) pairwise comparisons in Table \ref{t:linguistic-analysis} present the factors that differs between Neutral and the other two groups. 
-Compared with Neutral, More has less profanity words and exclamation marks, while Least has more profanity and angry words. 
-Surprisingly, though Most and Least differ in a lot of factors, they share similar characteristics when comparing to Neutral.  
-We notice a few factors that attract more \emph{Futures} following the \emph{Reply}:
-\begin{compactitem}
-\item Having more tokens, nouns and verbs. \emph{Reply}s written in more words are more inclined to captivate comments. 
-\item Using question marks. \emph{Reply}s using question marks are easier to have comments to follow.
-\item Using 1st person pronouns express people's own opinions and 2nd person pronouns targeting others. 
-\item Using overstated words indicating emphasis in certainty, such as absolute. 
-\end{compactitem}
-\end{comment}
-
-%We show the linguistic features that differ between the Most and the Least in the first pairwise comparison (Most vs. Least) in Table \ref{t:linguistic-analysis}. 
-%The conclusions drawn from All and Argue are mostly consistent, except Angry words. 
-%Although Argue made up of only 48.33\% of All, it is more representative of All than Nonargue. 
-%We draw several interesting insights from the All:
-%\begin{compactitem}
-%	\item More tokens, nouns and verbs signal Least.
-%	\item Question marks signal Least. They are often n rhetorical questions. 
-%	\item Quoting a part of the \emph{Hate} as well as using negation words signal Least.
-%	\item Fewer 1st person pronouns (e.g., I, me) and more 2nd person pronouns (e.g., you, your) signal that the \emph{Reply} is more likely to be Most. People tend to target others usually escalate hateful \emph{Futures}. 
-%	\item High profanity count signals Least. 
-%	\item When there are more negative, disgust and angry words, the \emph{Reply} tends to be Least. When more positive words, it tends to be Most.
-%\end{compactitem}
-
-% Start: Table 
-\begin{table*}[ht!]
-	\setlength{\tabcolsep}{.0775in}
-	\small
-	\centering	
-	\begin{tabular}{l ccc ccc ccc ccc}
-		\toprule
-		\multicolumn{1}{c}{} & \multicolumn{3}{c}{Highly} & \multicolumn{3}{c}{Somewhat} & \multicolumn{3}{c}{Barely} & \multicolumn{3}{c}{Weighted Average} \\
-		\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
-		& P & R & F1 & P & R & F1 & P & R & F1 & P & R & F1 \\
-		\hline
-		\addlinespace[1pt]
-		Majority Baseline & 0.00 & 0.00 & 0.00 & 0.49 & 1.00 & 0.66 & 0.00 & 0.00 & 0.00 &  0.24 & 0.49 & 0.33 \\ \addlinespace
-		
-		RoBERTa classifier with \\ 
-		~~~hate comment & 0.37 & 0.34 & 0.35 & 0.60 & 0.70 & 0.65 & 0.36 & 0.26 & 0.30 & 0.48 & 0.50 & 0.49 \\ \addlinespace
-		
-		~~~reply & 0.40 & 0.46 & 0.43 &  0.67 & 0.64 & 0.65 & 0.37 & 0.33 & 0.35 & 0.52 & 0.52 & 0.52 \\		
-		~~~~~~+ blending & 0.40 & 0.51 & 0.45 & 0.69 & 0.62 & 0.65 & 0.39 & 0.34 & 0.36 & 0.54 & 0.56 & 0.53\\
-		~~~~~~+ pretraining &\textbf{ 0.41 }& \textbf{0.59} & \textbf{0.48} & 0.37 & 0.32 & 0.34 & 0.69 & 0.59 & 0.64 & 0.56 & 0.53 & 0.54\\ 
-		~~~~~~~~~+ blending &\textbf{0.41} &	\textbf{0.57} & \textbf{0.48} & 0.72 & 0.59 &	0.65 & 0.39 & 0.34 & 0.37 &	0.56 & 0.53 &	0.54\\ 
-		\addlinespace
-		
-		~~~hate comment + reply & 0.38 & 0.56 & 0.45 & 0.67 & 0.57 & 0.61 & 0.38 & 0.26 & 0.31 & 0.52 & 0.50 & 0.50\\
-		~~~~~~+ blending†‡ & 0.42 & 0.54 & 0.47 & \textbf{0.71} & \textbf{0.65} & \textbf{0.68} & 0.41 & 0.32 & 0.36 & 0.56 & 0.55 & 0.55 \\
-		~~~~~~+ pretraining & 0.40 & 0.43 & 0.41 & 0.75 & 0.58 & 0.66 & 0.34 & 0.47 & 0.39 & 0.56 & 0.51 & 0.53\\
-		~~~~~~~~~+ blending†‡ & 0.43 & 0.52 & 0.47 & \textbf{0.74} & \textbf{0.64} & \textbf{0.68} & \textbf{0.39} & \textbf{0.41} & \textbf{0.40} & \textbf{0.58} & \textbf{0.55 }& \textbf{0.56}\\
-		\bottomrule
-		
-	\end{tabular}
-	\caption{Results obtained with several models. 
-		We indicate statistical significance (McNemar’s test \cite{mcnemar1947note} over the weighted average) as follows: 
-		† and ‡ indicate statistically significant ($p<0.01$) results with respect to the model trained with the \emph{reply} and \emph{hate comment + reply} using neither blending nor pretraining.
-		Training with the \emph{hate comment + reply}
-		coupled with pretraining with stance and blending stance yields the best results (F1: 0.56).
-		The supplementary materials detail the results pretraining with and blending all related tasks we consider.}
-	\label{t:model-results}
-\end{table*}
-
-
-
-\section{Experiments and Results} 
-\label{s:experiments}
-
-We experiment with models to solve two problems:
-\begin{compactitem}
-	\item Determining the effectiveness level of a reply to hateful content: highly, somewhat or barely effective (Section \ref{ss:levels}); and
-	\item Differentiating the top-$k$\% and bottom-$k$\% replies according to their effectiveness scores (Section \ref{ss:topbottom}).
-\end{compactitem}
-
-%We build neural network models to perform two different tasks:
-%\begin{compactitem}
-%	\item Predicting effectiveness level:  identifying if a \emph{Reply} is Most, Neutral or Least.
-%	\item Choosing optimal $\mathit{k}$: differentiating \emph{Reply}s between Most $\mathit{k}$\% and Least $\mathit{k}$\%, finding the $\mathit{k}$ with the best performance.
-%\end{compactitem}
-
-%We refer all the instances in our dataset as Strong and randomly split the Strong (30,485) as follows: 70\% for training, 15\% for validation and 15\% for testing.  
-%We utilize three datasets to assist the training and refer those instances as Weak (see Section \ref{s:experiments-network}). 
-%Weak instances are only used for training.
-
-All our models are neural classifiers with the RoBERTa transformer~\cite{DBLP:journals/corr/abs-1907-11692} as the main component.
-We use the pretrained models by HuggingFace~\cite{wolf-etal-2020-transformers}
-and Pytorch~\cite{NEURIPS2019_9015} to implement our models.
-The supplementary materials provide details about the hyperparameters and tuning process.
-
-\subsection{Determining Effectiveness Level}
-%: Highly, Somewhat, or Barely Effective}
-\label{ss:levels}
-
-%\paragraph{Neural Network Architecture} 
-We experiment with neural classifiers built on top of RoBERTa~\cite{DBLP:journals/corr/abs-1907-11692}. 
-The neural architecture consists of the RoBERTa transformer, 
-a fully connected layer (768 neurons and \texttt{tanh} activation), 
-and 
-another fully connected layer (3 neurons and softmax activation) to make predictions (highly, somewhat, or barely effective). 
-To investigate whether adding the hate comment would be beneficial, we consider three textual inputs:
-\begin{compactitem}
-	\item the hate comment;
-	\item the reply to the hate comment; and
-	\item the hate comment and the reply.
-\end{compactitem}
-
-Intuitively, the reply is the most important input, but as we shall see including the hate comment is beneficial.
-We concatenate both inputs with the \texttt{[SEP]} special token. 
-%The hyperparameters and other implementation details are presented in the Appendix. 
-%We implement two strategies to enhance the performance of neural models:
-
-\noindent
-\textbf{Pretraining with Related Tasks} 
-We experiment with several corpora to investigate whether pretraining with related tasks is beneficial. 
-Specifically, we pretrain with existing corpora annotating: 
-(a) hate speech: hateful or not hateful~\cite{qian-etal-2019-benchmark,hateoffensive}; 
-(b) sentiment: negative, neutral, or positive \cite{rosenthal-etal-2017-semeval}; 
-(c) sarcasm: sarcasm or not sarcasm \cite{ghosh-etal-2020-report}; 
-(d) counter hate speech: hate, neutral, or counterhate \cite{yu-etal-2022-hate};
-(e) stance: agree, neutral, or attack \cite{pougubiyong2021debagreement};
-and
-(f) referential: yes, or no (Section \ref{s:corpus_analysis}).
-
-\begin{table*}
-	\small
-	\centering	
-	\begin{tabular}{lrl  cccc cccc ccc}
-		\toprule
-		\multicolumn{3}{c}{} & \multicolumn{3}{c}{Top-k\%} && \multicolumn{3}{c}{Bottom-k\%} && \multicolumn{3}{c}{Weighted Average}  \\ \cmidrule(lr){4-6} \cmidrule(lr){8-10} \cmidrule(lr){12-14} 
-		& Size && P & R & F1 && P & R & F1 && P & R & F1  \\ \midrule
-		$\mathit{k}=5$  &  3,657 && 0.79 & 0.70 & 0.74 && 0.56 & 0.68 & 0.61 && 0.71 & 0.69 & 0.69 \\
-		$\mathit{k}=10$ &  6,462 && 0.59 & 0.70 & 0.64 && 0.67 & 0.55 & 0.60 && 0.63 & 0.62 & 0.62 \\
-		$\mathit{k}=15$ & 10,383 && 0.63 & 0.64 & 0.63 && 0.60 & 0.59 & 0.59 && 0.62 & 0.62 & 0.62 \\
-		$\mathit{k}=20$ & 15,136 && 0.62 & 0.84 & 0.71 && 0.57 & 0.28 & 0.38 && 0.60 & 0.61 & 0.57 \\ \bottomrule
-		
-	\end{tabular}
-	\caption{Experimental results differentiating the top-$k$\% and bottom-$k$\% replies to hateful content according to their effectiveness scores.
-		We present results for several values of $k$.
-		The results are higher than when also identifying \emph{somewhat effective} replies.
-		Additionally, it is easier to differentiate replies that have the very top and bottom of the effectiveness scores: the smaller the $k$, the higher the weighted average.
-		%	Results obtained with different $\mathit{k}$ using our best model (Trained with Hate\_Reply+Related task+Weak) from Table \ref{t:model-results}. We also indicate the size of data including both the training and testing data for each $\mathit{k}$. The best results are made when $\mathit{k}$ is 5.
-	}
-	\label{t:model-optimalk}
-\end{table*}
-
-\noindent
-\textbf{Blending Additional Annotations}
-Pretraining takes place prior to training with our corpus.
-We also experiment with a complementary approach: blending additional corpora during the training process, as proposed by \citet{shnarch-etal-2018-will}.
-With blending, there are two phases in the training process: 
-(a) $\mathit{m}$ blending epochs using all of our corpus and a fraction of an additional corpus,
-and
-(b) $\mathit{n}$ epochs using only our corpus. 
-In each blending epoch, a random fraction of an additional corpus is fed to the network.
-The fraction is determined by a blending factor $\alpha \in [0..1]$. 
-The first blending epoch is trained with our corpus and the whole additional corpus.
-Subsequent blending epochs use smaller fractions of the additional corpus.
-We use for blending purposes the corpora we use for pretraining that annotate three labels~\cite{rosenthal-etal-2017-semeval,pougubiyong2021debagreement,yu-etal-2022-hate}.
-%We experiment with the same additional corpus when using both pretraining and blending.
-
-
-\subsubsection{Quantitative Results}
-We split the 30,485 replies in our corpus into training (70\%), development (15\%) and testing (15\%).
-We present results with the testing split in Table \ref{t:model-results}.
-The majority baseline always predicts \emph{somewhat}.
-The remaining rows present results with different settings:
-using as input the \emph{hate comment}, the \emph{reply} or both without pretraining or blending, and also with
-pretraining, blending and both.
-We provide here results pretraining and blending with the most beneficial tasks:
-%hate speech,
-%counter speech for pretraining,
-%and 
-%stance for blending.
-%Blending requires tuning $\alpha$.
-referential (reply + pretraining),
-counter hate speech (reply + pretraining + blending, hate comment + reply + pretraining),
-and stance (hate comment + reply + pretraining + blending, and  + blending using reply and hate comment + reply).
-%We did so empirically using the training and development splits, like other hyperparameters.
-We tune the blending factor $\alpha$  with the training and development splits, like other hyperparameters.
-We found the optimal $\alpha$ to be 0.5 when blending without pretraining and 1.0 when pretraining and blending. 
-The supplementary materials present additional results.
-
-Using only the hate comment as input is a strong baseline: it substantially outperforms the majority baseline (F1: 0.49 vs. 0.33).
-The reply alone yields better results (F1: 0.52);
-and using both the hate comment and reply without blending or pretraining is detrimental (F1: 0.50).
-Pretraining and blending, however, yields the best results when using the hate comment and the reply (F1: 0.56).
-These results lead to the following observations:
-\begin{compactitem}
-	\item Pretraining and blending (by themselves and combined) are more beneficial when the input is both the hate comment and the reply.
-	\item While different systems obtain the same (or almost the same) F1 for individual labels,
-	the system trained with the hate comment and reply, and using pretraining and blending, yields the best results overall (F1: 0.56).
-\end{compactitem}
-
-
-%As shown in Table \ref{t:model-results}, blending Strong and Weak data obtains better results (F1 weighted average) than using only Strong (Reply: 0.53 vs. 0.52; Hate\_Reply: 0.55 vs. 0.50).
-%Pretraining with related tasks benefits models trained without Hate (Reply: 0.53 vs. 0.52) and models with Hate (Hate\_Reply: 0.53 vs. 0.50). 
-%These results indicate that predicting a \emph{Reply} as hate speech/counter speech or not is useful to determine whether the \emph{Reply} is Most, Neutral, or Least.
-
-
-%We make two observations on the results obtained using neither strategy. 
-%First, using the \emph{Reply} alone obtains much better results than the majority baseline (0.52 vs. 0.33).
-%In other words, modeling the \emph{Reply} allows the network to identify \emph{some} instances of Most and Least.
-%Second, incorporating the \emph{Hate} comment is not beneficial (0.50 vs. 0.52). 
-%This is due to the fact that Least has more profanity and hate words than Most (Table \ref{t:linguistic-analysis}), taking the \emph{Hate} into consideration make it more difficult for the network to differentiate Least from Most.
-%However, the network is able to learn the relationship between the \emph{Hate} and \emph{Reply} using either strategy and therefore achieves better results (+Weak: 0.53 vs 0.50, +Related task: 0.55 vs 0.50) or both (0.56 vs. 0.50).
-
-
-%Finally, the network (a) pretraining with stance detection and (b) blending Strong and Weak data (stance) achieves the best performance (Hate\_Reply+Related task+Weak: 0.56). 
-%This result is statistically significant ($p<0.01$) compared to Reply only model without pretraining with related tasks or blending Weak.
-
-% Start: Table 
-\begin{table*}
-	\small
-	\centering
-	\begin{tabular}{@{}p{\textwidth}@{}}
-		\toprule
-		Rhetorical question (23\%) \\ \addlinespace
-		Hate: \emph{Is that all you got you facist piece of sh*t?} \\
-		Reply: \emph{I don't bother with people not caring for the lives of others.} \hfill Gold: Highly [p:1, h:0]; Pred.: Somewhat  \\ \midrule
-		
-		Hateful but most effective (18\%) \\ \addlinespace
-		Hate: \emph{Does he create a sub for your vapid [\ldots]
-			%morons to use as ammo and its a conspiracy by others?
-			Lol y'all are some of the dumbest mother f**kers in the world.} \\
-		Reply: \emph{You are the dumbest. Then the rest follow.} \hfill Gold: Highly [p:6, h:0]; Pred.: Barely \\ \midrule
-		
-		Non hateful and least effective (16\%) \\ \addlinespace
-		Hate: \emph{You're an ignorant twat who just parrots what they read in FB and reddit memes [\ldots] 
-			%what the fuck is going on politically.
-			What a cancer you are
-		} \\
-		Reply: \emph{Calling other people cancer is taking it 
-			%a bit
-			too far. Mind rule 4, please.} \hfill Gold: Barely [p:3, h:1]; Pred.: Highly \\ \midrule
-		
-		Sarcasm or irony (15\%) \\ \addlinespace
-		Hate: \emph{No you retard, where is the f**king lie?} \\
-		Reply: \emph{Name calling nice argument.} \hfill Gold: Barely [p:3, h:2]; Pred.: Highly \\ \midrule
-		
-		General knowledge (10\%) \\ \addlinespace
-		Hate: \emph{lol bet you thought a single thing you said in your thread wasn't retarded.} \\
-		Reply: \emph{This place is infested with incels and TD trolls.} \hfill Gold: Barely [p:2, h:1]; Pred.: Somewhat \\ \midrule
-		
-		Negation (8\%) \\ \addlinespace
-		Hate: \emph{Why we have to tolerate Islam? %They literally call us filth. Christians are horrible as well. Both are f**king awful.} \\
-			They call us filth. Christians are horrible as well. Both are f**king awful.} \\
-		Reply: \emph{Not all Muslims are bigots, just like not all Christians are bigots.} \hfill Gold: Somewhat [p:0, h:0]; Pred.: Barely \\ \midrule
-	\end{tabular}
+	We experiment with models to solve two problems:
+	\begin{compactitem}
+		\item Determining the conversation incivility level of a reply to hateful content: highly, somewhat or barely incivility (Section \ref{ss:levels}); and
+		\item Differentiating the top-$k$\% and bottom-$k$\% replies according to their conversation incivility scores (Section \ref{ss:topbottom}).
+	\end{compactitem}
 	
-	\begin{comment}	
-	\begin{tabular}{p{2.5cm}p{0.1cm}p{0.6cm}p{7.3cm}rr}
-	\toprule
-	Error Type & \% & \multicolumn{2}{l}{Example} & Ground Truth  & Predicted  \\ \midrule	
-	Rhetorical question & 23 & \emph{Hate}: & Women who you f**king incels have access to are like that. &  & \\
-	&    & \emph{Reply}: & What does this sentence even MEAN? Is it an insult?  & Somewhat [0, 1] & Highly  \\
-	\midrule
-	Hateful but Most   & 18 & \emph{Hate}: & Does he create a sub for your vapid morons to use as ammo and its a conspiracy by others? Lol y'all are some of the dumbest mother f**kers in the world. &  &  \\
-	&    & \emph{Reply}: & You are the dumbest. Then the rest follow. & Highly [6, 1] & barely \\ 
-	\midrule
-	Non-hateful but Least & 16 & \emph{Hate}: & You're an ignorant twat who just parrots what they read in FB and reddit memes, thinking they know what the fuck is going on politically. What a cancer you are. &  &  \\
-	&    & \emph{Reply}: & Calling other people cancer is taking it a bit too far. Mind rule 4, please.  & Barely [3, -1] & Highly \\
-	\midrule
-	Sarcasm or irony & 15 & \emph{Hate}: & No you retard, where is the f**king lie? &  & \\
-	&    & \emph{Reply}: & Name calling nice argument. & Barely [3, -2] & Highly  \\
-	\midrule
-	General knowledge & 10 & \emph{Hate}: & lol bet you thought a single thing you said in your thread wasn't retarded. &  & \\
-	&    & \emph{Reply}: & This place is infested with incels and TD trolls. & Barely [2, -1] & Somewhat  \\		
-	\midrule
-	Negation & 8 & \emph{Hate}: & Why we have to tolerate Islam? They literally call us filth. Christians are horrible as well. Both are f**king awful. &  & \\
-	&    & \emph{Reply}: & Not all Muslims are bigots. Just like not all Christians are bigots. & Somewhat [0, 1] & barely  \\
-	\bottomrule
-	\end{tabular}
-	\end{comment}
-	\caption{Most common error types made by the best model (using as input the hate comment and the reply, and pretraining and blending).
-		We also show the values of \emph{popularity} (p) and \emph{hatefulness} (h).
-	}
-	\label{t:error}
-\end{table*}
-
-
-\subsection{Differentiating between the Top-$k$\% and Bottom-$k$\% replies}
-\label{ss:topbottom}
-Although determining the effectiveness level of any replies to hateful comment is a worthwhile goal (Section \ref{ss:levels}),
-differentiating between the top-$k$\% and bottom-$k$\% replies according to their effectiveness scores may lead to better actionable knowledge.
-The most and least effective replies are more informative than the large amount of highly and barely effective replies.
-Indeed, the latter have a large range of effectiveness scores.
-
-Table \ref{t:model-optimalk} presents the results with several $k$ values and the best performing system from Table \ref{t:model-results}.
-We include the top-$k$\% and bottom-$k$\% of all replies with the threshold effectiveness scores.
-Results show that the smaller the $k$, the easier it is to differentiate between the two kinds of replies.
-In other words, the most and least effective replies differ in language usage and the classifier is able to distinguish them.
-This is especially true for the top-$k$\% most effective replies when $k=5$.
-
-
-%For example, 
-%Although pretraining with related tasks and blending weak data achieve significantly better results, predicting the effectiveness level of a \emph{Reply} is still a tough task. 
-%We further set about differentiating Most from Least.
-%We define Most as top $\mathit{k}$\% and Least as bottom $\mathit{k}$\% based on our effectiveness scores (Section \ref{s:method}).\footnote{We include all the comments that fall exactly at the score at the border.}
-%To identify a \emph{Reply} is Most or Least, we utilize our best model (Table \ref{t:model-results}: Hate\_Reply+Related task+Weak) and experiment with different $\mathit{k}$ \(\in\) [5, 10, 15, 20]. 
-
-%Table \ref{t:model-optimalk} presents results with each test split regarding to each $\mathit{k}$. 
-%The best results are made when $\mathit{k}$ is 5: the F1 score for all classes are higher (Most: 0.74, Least: 0.61), and so is the weighted average (0.69).
-%Compared with $\mathit{k}$ as 20, $\mathit{k}$ as 5 is trained with notably smaller size of data but achieves significantly better performance (0.69 vs 0.57).
-%Along with a decreasing $\mathit{k}$, the results are equal to or worse than the previous $\mathit{k}$. 
-
-
-
-\section{Qualitative analysis}
-\label{s:erroranalysis}
-
-When determining the effectiveness level of a reply,
-when does our best model (Table \ref{t:model-results}) make mistakes? 
-To investigate this question,
-we manually analyze 200 random samples in which the output of the network differs from the ground truth. 
-Table \ref{t:error} exemplifies the most common error types.
-
-The most frequent error type (23\%) is \emph{Rhetorical questions},
-a finding consistent with previous work~\cite{schmidt-wiegand-2017-survey}. 
-In the example,
-the model fails to realize that the question in the hate comment is used to point out inappropriate content rather than expecting an answer.
-
-The second and third most common error types (18\% and 16\%)
-are when a reply is
-(a)~hateful but highly effective
-or
-(b)~non-hateful but barely effective.
-Using hateful language is a common counter speech strategy~\cite{DBLP:conf/icwsm/MathewSTRSMG019},
-and the model fails to recognize when doing so is highly effective at stopping hate.
-Similarly, the model struggles when countering hate politely is ineffective.
-When correcting misstatements, language toxicity may increase~\cite{10.1145/3411764.3445642}.
-It implies that in real conversations language is not the only factor that relates to effectiveness. 
-In fact, the effectiveness could be affected by other factors such as the user identities or stances they hold, which can not be captured by language based models. 
-
-
-Sarcasm and irony are also common error types (15\%) in our task,
-consistent with the task of detecting hate~\cite{nobata2016abusive,qian-etal-2019-benchmark}.
-% have pointed out that sarcasm and irony make detecting abusive and hateful content difficult. 
-In the example, using sarcasm to point out a bad argument elicits further hate (2 out of 3 comments after the reply are hateful)
-and the model errs.
-%We notice this discovery is also tenable in predicting effectiveness.  
-%In the example, the network identifies the \emph{Reply} as Most.
-%Indeed, the author of \emph{Reply} votes down the \emph{Hate} and pointed out he/she using name calling, 
-%which irritates the author of \emph{Hate}.
-%Therefore, the ground truth label is Least.
-
-Errors may also occur (10\%) when general knowledge is required to identify hate content that does not use offensive language.
-For example, calling people \emph{incels}.
-Finally, we observe that \emph{negation} appears in 8\% errors.
-In the example, negations are used to point out the flaws of generalizing.
-We hypothesize that the model fails to identify that the reply is somewhat effective: negation does indicate barely effectiveness in general (Table~\ref{t:linguistic-analysis}).
-
-
-\section{Conclusions and Future Work}
-Not all replies to hateful content are equally effective at stopping hatred.
-Indeed, replies that counter the hateful content sometimes elicit additional hate.
-In this paper, we work with a large dataset from Reddit and present a metric to measure effectiveness at stopping hatred.
-Our metric is simple and combines popularity (how many posts are published after a reply)
-and hatefulness (how many are hateful).
-Regardless of whether replies counter hateful content convincingly,
-we believe it is worthwhile to identify what kind of user-generated content is most effective at stopping hatred.
-While we make no causal claims which linguistic features could affect effectiveness, 
-our analysis shows that the language of user-generated replies differs depending on their effectiveness.
-For example,
-longer replies and those with profanity, negative, disgust or angry words are barely effective.
-Experimental results with transformers show that the task of forecasting effectiveness is challenging.
-We also show that pretraining and blending existing corpora yield improvements.
-
-Our work has several limitations. 
-First,  we identify hateful content automatically with classifiers.
-These classifiers obtain good results but are not perfect.
-As a result,
-some of the original hateful content we work with is actually not hateful.
-Second, we focus on the use of language in this work, while effectiveness may also be affected by other factors such as topics, positions, user identities, etc.
-We will explore them in our future research.
-Finally, we only consider the hateful comment and the reply in our experiments.
-Taking into account additional context (e.g., the full conversation thread) may be beneficial and could be applied in our future work.
-
-
-
-% Entries for the entire Anthology, followed by custom entries
-\bibliography{anthology,custom}
-
-\appendix
-
-% Start: Table 
-\begin{table}[ht!]
-	\centering
-	\small
-	\begin{tabular}{lrrr}
-		\toprule
-		Subreddit & Hate  & Reply & Future\\
-		\midrule
-		4Chan	 & 513 &	851	&1,349\\
-		antiwork &	610	&1,396	&2,256\\	
-		atheism	&422	&715	&1,648
-		\\
-		bakchodi	&91	&116	&191
-		\\
-		bindingofisaac	&60	&91	&129
-		\\
-		BlackPeopleTwitter	&59	&151	&239
-		\\
-		changemyview	&835	&1,127&	1,890
-		\\
-		conspiracy&	1,150&	1,717&	3,069
-		\\
-		DankMemes&	1,384&	2,136&	4,106
-		\\
-		DotA2&	223&	415&	708
-		\\
-		Drama&	261	&447	&654
-		\\
-		FemaleDatingStrategy&	142	&312&	303
-		\\
-		Feminism&	73&	136	&179
-		\\
-		GenZedong&	139&	198	&232
-		\\
-		HermanCainAward&	1,337&	1,932&	3,650
-		\\
-		justneckbeardthings&	840&	1,362&	3,441
-		\\
-		KotakuInAction&	343	&549	&796
-		\\
-		lmGoingToHellForThis&	124	&143&	211
-		\\
-		MensRights&	1,463&	1,987&	4,891
-		\\
-		MetaCanada	&664&	828	&1,546
-		\\
-		modernwarfare&	209	&316	&694
-		\\
-		NoFap&	60	&66&	75
-		\\
-		playrust	&108&	142	&308
-		\\
-		PurplePillDebate&	1,194&	1,599&	4,100
-		\\
-		PussyPass&	656&	791&	1,432
-		\\
-		PussyPassDenied	&3,258&	4,635&	9,060
-		\\
-		Seduction&	174	&239&	364
-		\\
-		ShitPoliticsSays&	630	&819	&2,283
-		\\
-		ShitRedditSays	&271&	353&	491
-		\\
-		Sino&	40&	87&	43
-		\\
-		SubredditDrama&	1,411&	2,204&	4,683
-		\\
-		TrueReddit	&319	&440&	1,096
-		\\
-		TumblrInAction&	138&	184&	359
-		\\
-		TwoXChromosomes	&197	&637&	562
-		\\
-		worldnews	&888&	1,364&	2,318\\
-		\midrule
-		Total & 20,286 & 30,485 & 59,356 \\
-		\bottomrule
-		
-	\end{tabular}
-	\caption{Number of hate comments, replies, and comments after the replies per subreddit.}
-	\label{t:subreddits}
-\end{table}
-% End: Table 
-
-% Start: Table 
-\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
-\begin{table*}
-	\setlength{\tabcolsep}{.075in}
-	\centering
-	\small
-	\begin{tabular}{l c
-			cP{.375in}P{.375in} c
-			cP{.375in}P{.375in} c
-			cP{.375in}P{.375in}}
-		\toprule
-		&& \multicolumn{3}{c}{Highly vs. Barely} && \multicolumn{3}{c}{Highly vs. Somewhat} && \multicolumn{3}{c}{Barely vs. Somewhat}\\ \cmidrule(lr){3-5}  \cmidrule(lr){7-9}  \cmidrule(lr){11-13}
-		&& \multirow{2}{*}{All} & \multicolumn{2}{c}{Referential?}
-		&& \multirow{2}{*}{All} & \multicolumn{2}{c}{Referential?}
-		&& \multirow{2}{*}{All} & \multicolumn{2}{c}{Referential?} \\ \cmidrule(lr){4-5} \cmidrule(lr){8-9} \cmidrule(lr){12-13}
-		&&& Yes & No &&& Yes & No &&& Yes & No \\ \midrule
-		Textual factors\\
-		~~~Tokens && $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ & $\uparrow\uparrow$ && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ &  \\
-		~~~Nouns && $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ & $\uparrow\uparrow$ && $\uparrow\uparrow\uparrow$ & &  && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ \\
-		~~~Verbs && $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ & && $\uparrow\uparrow\uparrow$ & & $\uparrow\uparrow\uparrow$ && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ \\
-		~~~Negations && $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ & && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & \\
-		~~~Quotations && $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow$ & && $\underline\uparrow$  & & $\underline\uparrow$  && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow$ & \\		
-		~~~Exclamations marks && $\underline\downarrow$  & $\underline\downarrow$  & & & $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ & $\underline\downarrow$  && & &  \\
-		~~~Questions marks&& $\downarrow\downarrow$ & & && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & \\
-		~~~1st person pronouns && $\downarrow\downarrow$ & $\underline\downarrow\underline\downarrow$  & && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ \\
-		~~~2nd person pronouns && $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ && $\uparrow\uparrow\uparrow$ & $\underline\uparrow\underline\uparrow$  & $\uparrow\uparrow\uparrow$ && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ \\ \midrule
-		Sentiment and Cognition \\
-		~~~~Negative words && $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ & && & $\downarrow\downarrow\downarrow$ & && $\underline\uparrow$  & & $\uparrow\uparrow\uparrow$  \\
-		~~~~Positive words && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & & && $\underline\uparrow$  & && $\downarrow\downarrow\downarrow$ & & $\downarrow\downarrow\downarrow$ \\
-		~~~~Profanity words && $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow$  && $\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ && $\uparrow\uparrow\uparrow$ & & \\
-		~~~~Overstated words && & $\underline\downarrow$  & && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ && $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ & $\uparrow\uparrow\uparrow$ \\
-		~~~~Disgust words && $\downarrow\downarrow\downarrow$ & $\downarrow\downarrow\downarrow$ && & & $\underline\downarrow$  & && $\underline\uparrow$ & $\underline\uparrow$  & \\
-		~~~~Angry words && $\downarrow\downarrow\downarrow$  & $\underline\uparrow$  & $\downarrow\downarrow\downarrow$ && & & && $\uparrow\uparrow\uparrow$ & $\underline\uparrow$ & $\uparrow\uparrow\uparrow$ \\ \bottomrule
-	\end{tabular}
 	
-	\caption{Linguistic analysis comparing the replies to hateful content that are highly, somewhat and barely effective at stopping hatred.
-		We provide results for all replies in each effectiveness level and depending on whether they refer to the hateful comment.
-		Number of arrows indicate the p-value (t-test; one: $p<0.05$, two: $p<0.01$, and three: $p<0.001$).
-		Arrow direction indicates whether higher values correlate with the first level (up) or the second (down) in each pairwise comparison. 
-		The few tests that do not pass the Bonferroni correction are underlined.}
-	\label{t:linguistic-analysis}
-\end{table*}
-% End: Table 
+	All our models are neural classifiers with the RoBERTa transformer~\cite{DBLP:journals/corr/abs-1907-11692} as the main component.
+	We use the pretrained models by HuggingFace~\cite{wolf-etal-2020-transformers}
+	and Pytorch~\cite{NEURIPS2019_9015} to implement our models.
+	The supplementary materials provide details.
+	
+		% Start: Table 
+	\begin{table*}[ht!]
+		\setlength{\tabcolsep}{.0775in}
+		\small
+		\centering	
+		\begin{tabular}{l ccc ccc ccc ccc}
+			\toprule
+			\multicolumn{1}{c}{} & \multicolumn{3}{c}{Highly} & \multicolumn{3}{c}{Somewhat} & \multicolumn{3}{c}{Barely} & \multicolumn{3}{c}{Weighted Average} \\
+			\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
+			& P & R & F1 & P & R & F1 & P & R & F1 & P & R & F1 \\
+			\hline
+			\addlinespace[1pt]
+			Majority Baseline & 0.00 & 0.00 & 0.00 & 0.49 & 1.00 & 0.66 & 0.00 & 0.00 & 0.00 &  0.24 & 0.49 & 0.32 \\ \addlinespace
+			
+			RoBERTa classifier with \\ 
+			~~~hate comment & 0.34 & 0.31 & 0.33 & 0.53 & 0.72 & 0.61 & 0.27 & 0.10 & 0.15 & 0.41 & 0.46 & 0.42 \\ \addlinespace
+			
+			~~~reply & 0.42 & 0.33 & 0.37 & 0.53 & 0.77 & 0.63 & 0.29 & 0.10 & 0.15 & 0.44 & 0.49 & 0.44\\		
+			~~~~~~+ blending & 0.42 & 0.42 & 0.42 & 0.55 & 0.76 & 0.63 & 0.33 & 0.08 & 0.13 & 0.46 & 0.50 & 0.45\\
+			~~~~~~+ pretraining† & 0.44 & 0.37 & 0.40 & 0.56 & 0.72 & 0.63 & 0.32 & 0.20 & 0.25 & 0.47 & 0.50 & 0.47\\ 
+			~~~~~~~~~+ blending†‡ & 0.47 & 0.39 & 0.43 & 0.57 & 0.70 & 0.63 & 0.34 & 0.25 & 0.29 & 0.49 & 0.51 & 0.49\\ 
+			\addlinespace
+			
+			~~~hate comment + reply & 0.43 & 0.32 & 0.36 & 0.55 & 0.66 & 0.60 & 0.32 & 0.27 & 0.29 & 0.46 & 0.48 & 0.46\\
+			~~~~~~+ blending† & 0.43 & 0.37 & 0.40 & 0.54 & 0.79 & 0.64 & 0.35 & 0.10 & 0.16 & 0.47 & 0.51 & 0.46\\
+			~~~~~~+ pretraining†‡ & \textbf{0.52} & \textbf{0.43} & \textbf{0.47} & \textbf{0.59} & \textbf{0.77}& \textbf{0.67} & 0.42 & 0.23 & 0.30 & \textbf{0.53 }& \textbf{0.55} & \textbf{0.52}\\
+			~~~~~~~~~+ blending†‡ & 0.48 & 0.42 & 0.45 & 0.59 & 0.72 & 0.65 & \textbf{0.38} & \textbf{0.27} & \textbf{0.32} & \textbf{0.51} & \textbf{0.53} & \textbf{0.52}\\
+			\bottomrule
+			
+		\end{tabular}
+		\caption{Results obtained with several models. 
+			We indicate statistical significance (McNemar’s test \cite{mcnemar1947note} over the weighted average) as follows: 
+			† indicates statistically significant ($p<0.05$) results with respect to the \emph{reply} model, ‡ with respect to the \emph{hate comment + reply} model.
+			Training with the \emph{hate comment + reply}
+			coupled with pretraining with stance or both pretraining and blending stance yields the best results (F1: 0.52).
+			The supplementary materials detail the results pretraining with and blending all related tasks we consider.}
+		\label{t:model-results}
+	\end{table*}
+	
+	\begin{table*}
+		\small
+		\centering	
+		\begin{tabular}{lrl  cccc cccc ccc}
+			\toprule
+			\multicolumn{3}{c}{} & \multicolumn{3}{c}{Top-k\%} && \multicolumn{3}{c}{Bottom-k\%} && \multicolumn{3}{c}{Weighted Average}  \\ \cmidrule(lr){4-6} \cmidrule(lr){8-10} \cmidrule(lr){12-14} 
+			& Size && P & R & F1 && P & R & F1 && P & R & F1  \\ \midrule
+			$\mathit{k}=5$  &  3,234 &&0.77 & 0.74 & 0.76 && 0.72 & 0.75 & 0.74	&& 0.75 & 0.75 & 0.75 \\
+			$\mathit{k}=10$ &  6,124 && 0.74 & 0.77 & 0.76 && 0.68 & 0.65 & 0.67 && 0.72 & 0.72 & 0.72 \\
+			$\mathit{k}=15$ & 10,434 && 0.70 & 0.76 & 0.73 && 0.68 & 0.61 & 0.65 && 0.69 & 0.69 & 0.69 \\
+			$\mathit{k}=20$ & 17,231 && 0.67 & 0.63 & 0.65 && 0.65 & 0.68 & 0.66  && 0.66 & 0.66 & 0.66 \\ \bottomrule
+			
+		\end{tabular}
+		\caption{Experimental results differentiating the top-$k$\% and bottom-$k$\% replies to hateful content according to their incivility scores.
+			We present results for several values of $k$.
+			The results are higher than when also identifying replies with \emph{somewhat} incivility.
+			Additionally, it is easier to differentiate the replies that have the very top and bottom of the incivility scores: the smaller the $k$, the higher the weighted average.
+		}
+		\label{t:model-optimalk}
+	\end{table*}
+	
+	\subsection{Determining Incivility Level}
+	%: Highly, Somewhat, or Barely Effective}
+	\label{ss:levels}
+	
+	%\paragraph{Neural Network Architecture} 
+	We experiment with neural classifiers built on top of RoBERTa~\cite{DBLP:journals/corr/abs-1907-11692}. 
+	The neural architecture consists of the RoBERTa transformer, 
+	a fully connected layer (768 neurons and \texttt{tanh} activation), 
+	and 
+	another fully connected layer (3 neurons and softmax activation) to make predictions (highly, somewhat, or barely incivility). 
+	To investigate whether adding the hate comment would be beneficial, we consider three textual inputs:
+	\begin{compactitem}
+		\item the hate comment;
+		\item the reply to the hate comment; and
+		\item the hate comment and the reply.
+	\end{compactitem}
+	
+	Intuitively, the reply is the most important input, but as we shall see including the hate comment is beneficial.
+	We concatenate both inputs with the \texttt{[SEP]} special token. 
+	
+	\noindent
+	\textbf{Pretraining with Related Tasks} 
+	We experiment with several corpora to investigate whether pretraining with related tasks is beneficial. 
+	Specifically, we pretrain with existing corpora annotating: 
+	(a) hate speech: hateful or not hateful~\cite{hateoffensive}; 
+	(b) sentiment: negative, neutral, or positive \cite{rosenthal-etal-2017-semeval}; 
+	(c) sarcasm: sarcasm or not sarcasm \cite{ghosh-etal-2020-report}; 
+	(d) counter hate speech: hate, neutral, or counterhate \cite{yu-etal-2022-hate}; and
+	(e) stance: agree, neutral, or attack \cite{pougubiyong2021debagreement}.
+	
+
+	
+	\noindent
+	\textbf{Blending Additional Annotations}
+	Pretraining takes place prior to training with our corpus.
+	We also experiment with a complementary approach: blending additional corpora during the training process, as proposed by \citet{shnarch-etal-2018-will}.
+	With blending, there are two phases in the training process: 
+	(a) $\mathit{m}$ blending epochs using all of our corpus and a fraction of an additional corpus,
+	and
+	(b) $\mathit{n}$ epochs using only our corpus. 
+	In each blending epoch, a random fraction of an additional corpus is fed to the network.
+	The fraction is determined by a blending factor $\alpha \in [0..1]$. 
+	The first blending epoch is trained with our corpus and the whole additional corpus.
+	Subsequent blending epochs use smaller fractions of the additional corpus.
+	We use for blending purposes the corpora we use for pretraining that annotate three labels~\cite{rosenthal-etal-2017-semeval,pougubiyong2021debagreement,yu-etal-2022-hate}.
 
 
-% Start: Table 
-\begin{table*}
-	\small
-	\centering
-	\setlength{\tabcolsep}{.07in}
-	\begin{tabular}{l ccc ccc ccc ccc}
-		\toprule
-		\multicolumn{1}{c}{} & \multicolumn{3}{c}{Highly} & \multicolumn{3}{c}{Somewhat} & \multicolumn{3}{c}{Barely} & \multicolumn{3}{c}{Weighted Average} \\
-		\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
-		& P & R & F1 & P & R & F1 & P & R & F1 & P & R & F1 \\
-		\hline \addlinespace 
-		Majority Baseline & 0.00 & 0.00 & 0.00 & 0.49 & 1.00 & 0.66 & 0.00 & 0.00 & 0.00 & 0.24 & 0.49 & 0.33 \\		
-		reply\\
-		~~~~+ pretraining with \\
-		~~~~~~~~~~~Hate\_twitter & 0.40 & 0.59	& 0.47  & 0.75 & 0.57	& 0.65	& 0.34	& 0.30 & 0.32 & 0.56	& 0.52	& 0.53\\
-		~~~~~~~~~~~Hate\_reddit & 0.40 & 0.58	& 0.47	& 0.74 &	0.57 &	0.64 & 0.36	& 0.32	& 0.34  &	0.56 &	0.52 &	0.53\\
-		~~~~~~~~~~~Sentiment & 0.38 & 0.55	& 0.45	&	0.73 &	0.57 &	0.64 & 0.35 & 0.31 &	0.33  &	0.55 &	0.51 &	0.52\\
-		~~~~~~~~~~~Sarcasm & 0.38 & 0.55 &	0.45 &	0.69 &	0.56 &	0.62 &	0.37 &	0.30 &	0.33  &	0.53 &	0.50 &	0.51\\
-		~~~~~~~~~~~Counter & 0.39 & 0.52 &	0.45 &	0.74 &	0.57 &	0.64 &	0.32 &	0.35 &	0.33  & 	0.55 &	0.51 &	0.52\\
-		~~~~~~~~~~~Stance & 0.40 &	0.54 &	0.46 &	0.75 &	0.56 &	0.64 &	0.33 &	0.36 &	0.35  &	0.56 &	0.51 &	0.52\\
-		~~~~~~~~~~~Referential &\textbf{ 0.41 }& \textbf{0.59} & \textbf{0.48} & 0.37 & 0.32 & 0.34 & 0.69 & 0.59 & 0.64 & 0.56 & 0.53 & 0.54\\ 
-		~~~~+ blending with\\
-		~~~~~~~~~~~Sentiment & 0.39 & 0.49 & 0.44 &	0.72 &	0.59 &	0.65 & 0.38 &	0.39 &	0.38  &	0.55 &	0.52 &	0.53\\
-		~~~~~~~~~~~Counter & 0.40  & 0.56 & 0.47 &	0.70 &	0.61 &	0.65  &	0.40 & 0.31 &	0.35 &	0.55 &	0.53 &	0.53\\
-		~~~~~~~~~~~Stance & 0.40 & 0.51 & 0.45 &	0.69 &	0.62 &	0.65 &	0.39 &	0.34 &	0.36  &	0.54 &	0.56 &	0.53 \\
-		~~~~+ pretraining + blending \\
-		~~~~~~~~~~~Sentiment & 0.40 & 0.46 & 0.43 & 0.66 & 0.66 &	0.66 & 0.37 &	0.30 & 0.33 &	0.52 &	0.52 &	0.52\\
-		~~~~~~~~~~~Counter &\textbf{0.41} &	\textbf{0.57} & \textbf{0.48 }&	0.72 &	0.59 &	0.65 & 0.39 &	0.34 &	0.37 &	0.56 &	0.53 &	0.54\\
-		~~~~~~~~~~~Stance & 0.39 &	0.50 & 	0.44 &	0.69 &	0.62 &	0.65 &	0.38 &	0.33 &	0.36  &	0.54 &	0.52 &	0.53\\
-		hate comment + reply\\
-		~~~~+ pretraining with \\
-		~~~~~~~~~~~Hate\_twitter & 0.40 & 0.45 & 0.42 &	0.68 &	0.62 & 0.65 & 0.37 &	0.39 &	0.38  & 0.53 & 0.52 &	0.53\\
-		~~~~~~~~~~~Hate\_reddit & 0.40 & 0.58 & 0.47 &	0.74 &	0.57 &	0.64 &	0.36 &	0.32 &	0.34  &	0.56 &	0.52 &	0.53\\
-		~~~~~~~~~~~Sentiment & 0.39 &  0.34 & 0.36 & 	0.58 & 	0.75 & 	0.65 &  0.42 &  0.21 &  0.28 & 	0.49 & 	0.51 & 	0.49\\
-		~~~~~~~~~~~Sarcasm & 0.38 & 0.55 &	0.45 & 0.69 & 0.56 & 	0.62 & 	0.37 & 	0.3 & 0.33 & 	0.53 & 	0.50  & 0.51\\
-		~~~~~~~~~~~Counter & 0.40 & 0.43 &  0.41 & 	0.75 & 	0.58 & 	0.66 &	0.34 & 	0.47 & 	0.39  & 	0.56 & 	0.51 & 	0.53\\
-		~~~~~~~~~~~Stance & 0.38 &	0.49 &	0.43 &	0.67 &	0.55 &	0.60 &	0.37 &	0.38 &	0.37  &	0.52 &	0.50 &	0.50\\
-		~~~~~~~~~~~Referential & 0.39 & 0.51 & 0.44 & 0.37 & 0.34 & 0.35 & 0.69 & 0.59 & 0.64 & 0.53 & 0.51 & 0.52\\
-		~~~~+ blending with \\
-		~~~~~~~~~~~Sentiment & 0.38 &	0.42 &	0.40 &	0.67 &	0.63 &	0.65 &	0.38 &	0.38 &	0.38 &	0.52 &	0.52 &	0.52\\
-		~~~~~~~~~~~Counter &0.38 &	0.41 &	0.40 &	0.64 &	0.66 &	0.65 &	0.38 &	 0.31 &	0.35 &	0.51 &	0.51 &	0.51\\
-		~~~~~~~~~~~Stance & 0.42 &	0.54 &	0.47 &	\textbf{0.71} &	\textbf{0.65} &	\textbf{0.68} &	0.41 &	0.32 &	0.36  &	0.56 &	0.55 &	0.55 \\
-		~~~~+ pretraining + blending\\
-		~~~~~~~~~~~Sentiment & 0.40 &	0.45 &	0.42 &	0.68 &	0.60 &	0.64 &	0.37 &	0.41 &	0.39 &	0.53 &	0.52 &	0.52\\
-		~~~~~~~~~~~Counter & 0.40 & 0.47 &	0.43 &	0.71 &	0.56 &	0.63 & \textbf{0.36} &	\textbf{0.45} &	\textbf{0.40}  &	0.55 &	0.51 & 0.52\\
-		~~~~~~~~~~~Stance & 0.43 &	0.52 &	0.47&	\textbf{0.74} &	\textbf{0.64} &	\textbf{0.68}  &	\textbf{0.39} &	\textbf{0.41} & \textbf{	0.40} &	\textbf{0.58} &	\textbf{0.55} &	\textbf{0.56} \\
-		\bottomrule
-		
-	\end{tabular}
-	\caption{Detailed results (P, R, and F) predicting whether the reply is Highly, Somewhat, and Barely when the input is only the reply or the hate comment + reply. These results are using RoBERTa and pretrained with or blending each each related task. This table complements Table \ref{t:model-results} in the paper.}
-	\label{t:detailed-results}
-\end{table*}
-% End: Table 
+	% Start: Table 
+	\begin{table*}
+		\small
+		\centering
+		\begin{tabular}{@{\hspace{.03in}}p{2.5cm}p{0.1cm}p{8.4cm}ll@{\hspace{.03in}}}
+			\toprule
+			Error Type & \% & Example & Ground Truth  & Predicted  \\ \midrule
+			
+			Rhetorical question & 23 & Hate: \emph{Why not complain about women you sad pathetic f**k?} &  & \\
+			&    & Reply: \emph{Haha another b**ch a** white knight. F**k off sissy.} & Somewhat & Highly  \\
+			\midrule
+			Uncivil but barely incivility & 18 & Hate: \emph{I've addressed this about forty times with as many smooth brains as you so. You're an idiot.} & & \\
+			&   &  Reply: \emph{I think you might be the idiot here retard.} & Barely & Highly \\
+			\midrule
+			Civil but highly incivility & 16 & Hate: \emph{You’re an ignorant twat who just parrots what they read in FB and reddit memes. [\ldots] What a cancer you are.}  & & \\
+			&  & Reply: \emph{Calling others cancer is taking it too far. Mind rule 4, please.} & Highly & Barely\\
+			\midrule
+			Sarcasm or irony & 15 & Hate: \emph{No you retard, where is the f**king lie?} & & \\
+			&  & Reply: \emph{Name calling nice argument.} & Highly & Barely \\
+			\midrule
+			General knowledge & 10 & Hate: \emph{lol bet you thought a single thing you said wasn’t retarded.} & & \\
+			&  & Reply: \emph{This place is infested with incels and TD trolls. } & Highly & Somewhat \\
+			\midrule
+			Negation & 8 & Hate: \emph{Why we have to tolerate Islam? They call us filth. Christians are horrible as well. Both are f**king awful.} && \\
+			& & Reply: \emph{Not all Muslims are bigots, like not all Christians are bigots.} & Somewhat & Highly \\
+			\bottomrule
+		\end{tabular}
+		\caption{Most common error types made by the best model (predictions by hate comment + reply + pretraining).
+		}
+		\label{t:error}
+	\end{table*}
+	% End: Table 
+	
+	\subsubsection{Quantitative Results}
+	We split the 34,115 replies in our corpus into training (60\%), development (20\%) and testing (20\%).
+	We present results with the testing split in Table \ref{t:model-results}.
+	The majority baseline always predicts \emph{somewhat}.
+	The remaining rows present results with different settings:
+	using as input the \emph{hate comment}, the \emph{reply} or both without pretraining or blending, and also with
+	pretraining, blending and both.
+	We provide here results pretraining and blending with the most beneficial tasks:
+	counter hate speech (+ pretraining when using reply, and + blending using hate comment + reply),
+	and stance for the remaining ones.
+	We tune the blending factor $\alpha$  with the training and development splits, like other hyperparameters.
+	We found the optimal $\alpha$ to be 0.5 when only blending and 1.0 when pretraining and blending. 
+	
+	Using only the reply as input is a strong baseline: it substantially outperforms the majority baseline (F1: 0.44 vs. 0.32).
+	Using both the hate comment and reply yields better results (F1: 0.46).
+	Pretraining and blending yield better results compared with blending alone (reply: 0.49 vs. 0.45, hate comment + reply: 0.52 vs. 0.46).
+	Also, pretraining or pretraining and blending are more beneficial when the input is both the hate comment and the reply.
+	Finally, the networks (a) pretraining and (b) pretraining and blending using both hate comment and reply yield best results (F1: 0.52).
 
-% Start: Table 
-\begin{table*}
-	\centering
-	\small
-	\begin{tabular}{lccccc}
-		\toprule
-		& Epochs & Batch size & Learning rate & Dropout & Patience \\
-		\midrule
-		reply &  5 & 8 & 1e-5 & 0.5 & 10 \\
-		~~~~+ blending & 5 & 8 &  1e-5 & 0.5 & 10 \\
-		~~~~+ pretraining & 5 & 8 &  1e-5 & 0.5 & 10\\
-		~~~~~~~~+ blending & 4 & 8 &  1e-5 & 0.5 & 10  \\
-		\bottomrule
-		
-	\end{tabular}
-	\caption{Hyperparameters used to fine-tune RoBERTa individually for each training setting. We accept default settings for the other hyperparameters as defined in the implementation by \citet{phang2020jiant}. }
-	\label{t:hyperparameters}
-\end{table*}
-% End: Table 
+	
+	\subsection{Differentiating between the Top-$k$\% and Bottom-$k$\% replies}
+	\label{ss:topbottom}
+	Although determining the incivility level of any replies to hateful comment is a worthwhile goal (Section \ref{ss:levels}),
+	differentiating between the top-$k$\% and bottom-$k$\% replies according to their incivility scores may lead to better actionable knowledge.
+	Replies with the highest and lowest incivility scores are more informative than the large amount of replies with highly and barely conversation incivility.
+	Indeed, the latter have a large range of incivility scores.
+	
+	Table \ref{t:model-optimalk} presents the results with several $k$ values.
+	We implement with one of the best performing systems from Table \ref{t:model-results} (hate comment + reply + pretraining).
+	We include in the top-$k$\% and bottom-$k$\% of all replies with the threshold incivility scores.
+	Results show that the smaller the $k$, the easier it is to differentiate between the two kinds of replies.
+	In other words, replies with the most and least conversation incivility differ in language usage and the classifier is able to distinguish them.
+	This is especially true when $k=5$.
 
-\section{Ethical Considerations}
-\label{sec:appendix}
-We use the PushShift API to collect data from Reddit.\footnote{\url{https://pushshift.io/api-parameters/}} 
-The collection process is consistent with Reddit's Terms of Service. 
-We access our data through the data dumps on Google's BigQuery using Python.\footnote{\url{https://pushshift.io/
-		using-bigquery-with-reddit-data/}} 
-
-Reddit can be considered a public space for discussion which differs from a private messaging service \cite{vidgen-etal-2021-introducing}. 
-Users consent to have their data made available to third parties including academics when they sign up to Reddit. 
-Existing ethical guidelines state that in this situation explicit consent is not required from each user \cite{DBLP:conf/tto/ProcterWBHEWJ19}. 
-We obfuscate user names to reduce the possibility of identifying users. 
-In compliance with Reddit's policy, we would like to make sure that our dataset will be reused for non-commercial research only.\footnote{\url{https://www.reddit.com/wiki/api-terms/}}
-
-The annotator was warned of the potential hateful content before working on our task. 
-We provide annotator with access to supporting services throughout the task.
-Annotator was compensated with 8 US\$ per hour.
-
-
-\section{Data}
-\label{sec:appendix_data}
-The number of hate comments (Hate), replies (Reply) and comments after the replies (Future) in each subreddits are detailed in Table \ref{t:subreddits}. 
-In total, there are 20,286 hate comments, 30,485 replies, and 59,356 comments after the replies from the 35 subreddits.
-
-
-\section{Linguistic Analysis}
-\label{sec:appendix_ling}
-Table \ref{t:linguistic-analysis} presents the details of the linguistic analysis discussed in Section \ref{s:corpus_analysis}.
-
-\section{Detailed Results}
-\label{sec:appendix_results}
-Table \ref{t:detailed-results} presents detailed results complementing Table \ref{t:model-results} in the paper. 
-We provide Precision, Recall and weighted F1-score using each related task for pretraining and blending.
-%each weak data for blending the strong data when the input is Reply and Hate\_Reply respectively in Table \ref{t:detailed-results}.
-
-
-\section{Hyperparamters and Finetuning Process}
-\label{sec:appendix_hyper}
-
-Our dataset was pre-processed by removing URLs, removing symbols, removing any additional spaces, and at the end, converting all words to lower-case. 
-The neural model takes about an hour on average to train on a single NVIDIA TITAN Xp. 
-We use the implementation by \citet{phang2020jiant} and fine-tune the RoBERTa (base architecture; 12 layers) \cite{DBLP:journals/corr/abs-1907-11692} model for each of the four training settings. 
-For each setting, we set the hyperparameters to be the same when the input is the hateful comment, the reply, or both (Table \ref{t:hyperparameters}).
-
+	
+	\section{Qualitative analysis}
+	\label{s:erroranalysis}
+	
+	When determining the incivility level of a reply,
+	when does our best model (Table \ref{t:model-results}) make mistakes? 
+	To investigate this question,
+	we manually analyze 200 random samples in which the output of the network differs from the ground truth. 
+	Table \ref{t:error} exemplifies the most common error types.
+	
+	The most frequent error type (23\%) is \emph{Rhetorical questions},
+	a finding consistent with previous work~\cite{schmidt-wiegand-2017-survey}. 
+	In the example,
+	the model fails to realize that the question in the hate comment is used to point out inappropriate content rather than expecting an answer.
+	
+	The second and third most common error types (18\% and 16\%)
+	are when a reply is
+	(a)~uncivil but has barely incivility
+	or
+	(b)~civil but has highly incivility.
+	Using uncivil language is a counter hate strategy~\cite{DBLP:conf/icwsm/MathewSTRSMG019},
+	and the model fails to recognize when doing so leads to barely conversation incivility .
+	Similarly, the model struggles when countering hate politely elicits additional uncivil behaviors.
+	When correcting misstatements, language toxicity may increase~\cite{10.1145/3411764.3445642}.
+	
+	
+	Sarcasm and irony are also common error types (15\%) in our task,
+	consistent with the task of detecting hate~\cite{nobata2016abusive,qian-etal-2019-benchmark}.
+	In the example, using sarcasm to point out a bad argument elicits further hate and the model errs.
+	
+	Errors may also occur (10\%) when general knowledge is required to identify hate content that does not use offensive language (e.g., calling people \emph{incels}).
+	Finally, we observe that \emph{negation} appears in 8\% errors.
+	In the example, negations are used to point out the flaws of generalizing.
+	We hypothesize that the model fails to identify that the reply has somewhat conversation incivility: negation does indicate highly incivility in general (Table~\ref{t:linguistic}).
+	
+	
+	\section{Conclusions}
+	Not all replies to hateful content have equal conversation incivility.
+	In this paper, we work with a large dataset from Reddit and present a metric to measure conversation incivility of replies to hateful content.
+	Our metric takes account into the number of both civil and uncivil comments from each user.
+	Regardless of whether replies counter hateful content convincingly,
+	we believe it is worthwhile to identify what kind of user-generated content attracts great attention and at the same time shapes civil discussions.
+	While we make no causal claims which linguistic features could affect conversation incivility, 
+	we show that the language of user-generated replies differs depending on their conversation incivility levels.
+	Indeed, our analyses can recover some of the intuition: replies that use more negative and hateful words are tied with a higher incivility degree in their follow-up conversations.
+	Experimental results show that pretraining and blending existing corpora yield improvements, while the task of forecasting conversation incivility is still challenging to automate.
+	
+	We rely on automated methods to formulate a setting that allows us to differentiate replies with highly conversation incivility from barely conversation incivility. 
+	Our manual validation suggests that it is feasible at the level of human intuition where follow-up conversations are accessible (see Section~\ref{ss:validation}).
+	The experiments that differentiate the top-$k$\% from bottom-$k$\% achieve even more encouraging results when $k$ is smaller, where follow-up conversations are not accessible (see Section~\ref{ss:topbottom}).
+	Both bring up the potential of automated methods to measure and forecast conversation incivility of replies to hateful content, when they usually have at least one comment following.
+	
+	
+	
+	\section*{Limitations}
+	Our work has several limitations. 
+	First, our correlational analyses do not provide any insights into casual mechanism of conversation incivility, which small-scale user studies could address (see Section~\ref{s:related_work}).
+	Second, we identify uncivil comments automatically with classifiers.
+	These classifiers obtain good results but are not perfect.
+	As a result,
+	some of the original uncivil comments we work with is actually not uncivil.
+	Third, we focus on forecasting conversation incivility from linguistic aspects in this work. 
+	A promising line of future work could consider to combine structural and linguistic features and incorporate other factors such as positions and user identities in modeling.
+	Finally, we only consider the hateful comment and the reply in our experiments.
+	More complex modeling that takes into account additional context (e.g., the full thread) may be beneficial.
+	We leave it in our future work.
+	
+	% Entries for the entire Anthology, followed by custom entries
+	\bibliography{anthology,custom}
+	\bibliographystyle{acl_natbib}
+	
+	\appendix
+	
+	% Start: Table 
+	\begin{table}[ht!]
+		\centering
+		\small
+		\begin{tabular}{lrrr}
+			\toprule
+			Subreddit & Hate  & Reply & Future\\
+			\midrule
+			4Chan	 & 513 &	851	&1,349\\
+			antiwork &	610	&1,396	&2,256\\	
+			atheism	&422	&715	&1,648
+			\\
+			bakchodi	&91	&116	&191
+			\\
+			bindingofisaac	&60	&91	&129
+			\\
+			BlackPeopleTwitter	&59	&151	&239
+			\\
+			changemyview	&835	&1,127&	1,890
+			\\
+			conspiracy&	1,150&	1,717&	3,069
+			\\
+			DankMemes&	1,384&	2,136&	4,106
+			\\
+			DotA2&	223&	415&	708
+			\\
+			Drama&	261	&447	&654
+			\\
+			FemaleDatingStrategy&	142	&312&	303
+			\\
+			Feminism&	73&	136	&179
+			\\
+			GenZedong&	139&	198	&232
+			\\
+			HermanCainAward&	1,337&	1,932&	3,650
+			\\
+			justneckbeardthings&	840&	1,362&	3,441
+			\\
+			KotakuInAction&	343	&549	&796
+			\\
+			lmGoingToHellForThis&	124	&143&	211
+			\\
+			MensRights&	1,463&	1,987&	4,891
+			\\
+			MetaCanada	&664&	828	&1,546
+			\\
+			modernwarfare&	209	&316	&694
+			\\
+			NoFap&	60	&66&	75
+			\\
+			playrust	&108&	142	&308
+			\\
+			PurplePillDebate&	1,194&	1,599&	4,100
+			\\
+			PussyPass&	656&	791&	1,432
+			\\
+			PussyPassDenied	&3,258&	4,635&	9,060
+			\\
+			Seduction&	174	&239&	364
+			\\
+			ShitPoliticsSays&	630	&819	&2,283
+			\\
+			ShitRedditSays	&271&	353&	491
+			\\
+			Sino&	40&	87&	43
+			\\
+			SubredditDrama&	1,411&	2,204&	4,683
+			\\
+			TrueReddit	&319	&440&	1,096
+			\\
+			TumblrInAction&	138&	184&	359
+			\\
+			TwoXChromosomes	&197	&637&	562
+			\\
+			worldnews	&888&	1,364&	2,318\\
+			\midrule
+			Total & 20,286 & 30,485 & 59,356 \\
+			\bottomrule
+			
+		\end{tabular}
+		\caption{Number of hate comments, replies, and comments after the replies per subreddit.}
+		\label{t:subreddits}
+	\end{table}
+	% End: Table 
+	
+	
+	
+	% Start: Table 
+	\begin{table*}
+		\small
+		\centering
+		\setlength{\tabcolsep}{.07in}
+		\begin{tabular}{l ccc ccc ccc ccc}
+			\toprule
+			\multicolumn{1}{c}{} & \multicolumn{3}{c}{Highly} & \multicolumn{3}{c}{Somewhat} & \multicolumn{3}{c}{Barely} & \multicolumn{3}{c}{Weighted Average} \\
+			\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
+			& P & R & F1 & P & R & F1 & P & R & F1 & P & R & F1 \\
+			\hline \addlinespace 
+			Majority Baseline & 0.00 & 0.00 & 0.00 & 0.49 & 1.00 & 0.66 & 0.00 & 0.00 & 0.00 & 0.24 & 0.49 & 0.33 \\		
+			reply\\
+			~~~~+ pretraining with \\
+			~~~~~~~~~~~Hate\_twitter & 0.40 & 0.59	& 0.47  & 0.75 & 0.57	& 0.65	& 0.34	& 0.30 & 0.32 & 0.56	& 0.52	& 0.53\\
+			~~~~~~~~~~~Hate\_reddit & 0.40 & 0.58	& 0.47	& 0.74 &	0.57 &	0.64 & 0.36	& 0.32	& 0.34  &	0.56 &	0.52 &	0.53\\
+			~~~~~~~~~~~Sentiment & 0.38 & 0.55	& 0.45	&	0.73 &	0.57 &	0.64 & 0.35 & 0.31 &	0.33  &	0.55 &	0.51 &	0.52\\
+			~~~~~~~~~~~Sarcasm & 0.38 & 0.55 &	0.45 &	0.69 &	0.56 &	0.62 &	0.37 &	0.30 &	0.33  &	0.53 &	0.50 &	0.51\\
+			~~~~~~~~~~~Counter & 0.39 & 0.52 &	0.45 &	0.74 &	0.57 &	0.64 &	0.32 &	0.35 &	0.33  & 	0.55 &	0.51 &	0.52\\
+			~~~~~~~~~~~Stance & 0.40 &	0.54 &	0.46 &	0.75 &	0.56 &	0.64 &	0.33 &	0.36 &	0.35  &	0.56 &	0.51 &	0.52\\
+			~~~~~~~~~~~Referential &\textbf{ 0.41 }& \textbf{0.59} & \textbf{0.48} & 0.37 & 0.32 & 0.34 & 0.69 & 0.59 & 0.64 & 0.56 & 0.53 & 0.54\\ 
+			~~~~+ blending with\\
+			~~~~~~~~~~~Sentiment & 0.39 & 0.49 & 0.44 &	0.72 &	0.59 &	0.65 & 0.38 &	0.39 &	0.38  &	0.55 &	0.52 &	0.53\\
+			~~~~~~~~~~~Counter & 0.40  & 0.56 & 0.47 &	0.70 &	0.61 &	0.65  &	0.40 & 0.31 &	0.35 &	0.55 &	0.53 &	0.53\\
+			~~~~~~~~~~~Stance & 0.40 & 0.51 & 0.45 &	0.69 &	0.62 &	0.65 &	0.39 &	0.34 &	0.36  &	0.54 &	0.56 &	0.53 \\
+			~~~~+ pretraining + blending \\
+			~~~~~~~~~~~Sentiment & 0.40 & 0.46 & 0.43 & 0.66 & 0.66 &	0.66 & 0.37 &	0.30 & 0.33 &	0.52 &	0.52 &	0.52\\
+			~~~~~~~~~~~Counter &\textbf{0.41} &	\textbf{0.57} & \textbf{0.48 }&	0.72 &	0.59 &	0.65 & 0.39 &	0.34 &	0.37 &	0.56 &	0.53 &	0.54\\
+			~~~~~~~~~~~Stance & 0.39 &	0.50 & 	0.44 &	0.69 &	0.62 &	0.65 &	0.38 &	0.33 &	0.36  &	0.54 &	0.52 &	0.53\\
+			hate comment + reply\\
+			~~~~+ pretraining with \\
+			~~~~~~~~~~~Hate\_twitter & 0.40 & 0.45 & 0.42 &	0.68 &	0.62 & 0.65 & 0.37 &	0.39 &	0.38  & 0.53 & 0.52 &	0.53\\
+			~~~~~~~~~~~Hate\_reddit & 0.40 & 0.58 & 0.47 &	0.74 &	0.57 &	0.64 &	0.36 &	0.32 &	0.34  &	0.56 &	0.52 &	0.53\\
+			~~~~~~~~~~~Sentiment & 0.39 &  0.34 & 0.36 & 	0.58 & 	0.75 & 	0.65 &  0.42 &  0.21 &  0.28 & 	0.49 & 	0.51 & 	0.49\\
+			~~~~~~~~~~~Sarcasm & 0.38 & 0.55 &	0.45 & 0.69 & 0.56 & 	0.62 & 	0.37 & 	0.3 & 0.33 & 	0.53 & 	0.50  & 0.51\\
+			~~~~~~~~~~~Counter & 0.40 & 0.43 &  0.41 & 	0.75 & 	0.58 & 	0.66 &	0.34 & 	0.47 & 	0.39  & 	0.56 & 	0.51 & 	0.53\\
+			~~~~~~~~~~~Stance & 0.38 &	0.49 &	0.43 &	0.67 &	0.55 &	0.60 &	0.37 &	0.38 &	0.37  &	0.52 &	0.50 &	0.50\\
+			~~~~~~~~~~~Referential & 0.39 & 0.51 & 0.44 & 0.37 & 0.34 & 0.35 & 0.69 & 0.59 & 0.64 & 0.53 & 0.51 & 0.52\\
+			~~~~+ blending with \\
+			~~~~~~~~~~~Sentiment & 0.38 &	0.42 &	0.40 &	0.67 &	0.63 &	0.65 &	0.38 &	0.38 &	0.38 &	0.52 &	0.52 &	0.52\\
+			~~~~~~~~~~~Counter &0.38 &	0.41 &	0.40 &	0.64 &	0.66 &	0.65 &	0.38 &	 0.31 &	0.35 &	0.51 &	0.51 &	0.51\\
+			~~~~~~~~~~~Stance & 0.42 &	0.54 &	0.47 &	\textbf{0.71} &	\textbf{0.65} &	\textbf{0.68} &	0.41 &	0.32 &	0.36  &	0.56 &	0.55 &	0.55 \\
+			~~~~+ pretraining + blending\\
+			~~~~~~~~~~~Sentiment & 0.40 &	0.45 &	0.42 &	0.68 &	0.60 &	0.64 &	0.37 &	0.41 &	0.39 &	0.53 &	0.52 &	0.52\\
+			~~~~~~~~~~~Counter & 0.40 & 0.47 &	0.43 &	0.71 &	0.56 &	0.63 & \textbf{0.36} &	\textbf{0.45} &	\textbf{0.40}  &	0.55 &	0.51 & 0.52\\
+			~~~~~~~~~~~Stance & 0.43 &	0.52 &	0.47&	\textbf{0.74} &	\textbf{0.64} &	\textbf{0.68}  &	\textbf{0.39} &	\textbf{0.41} & \textbf{	0.40} &	\textbf{0.58} &	\textbf{0.55} &	\textbf{0.56} \\
+			\bottomrule
+			
+		\end{tabular}
+		\caption{Detailed results (P, R, and F) predicting whether the reply is Highly, Somewhat, and Barely when the input is only the reply or the hate comment + reply. These results are using RoBERTa and pretrained with or blending each each related task. This table complements Table \ref{t:model-results} in the paper.}
+		\label{t:detailed-results}
+	\end{table*}
+	% End: Table 
+	
+	% Start: Table 
+	\begin{table*}
+		\centering
+		\small
+		\begin{tabular}{lccccc}
+			\toprule
+			& Epochs & Batch size & Learning rate & Dropout & Patience \\
+			\midrule
+			reply &  5 & 8 & 1e-5 & 0.5 & 10 \\
+			~~~~+ blending & 5 & 8 &  1e-5 & 0.5 & 10 \\
+			~~~~+ pretraining & 5 & 8 &  1e-5 & 0.5 & 10\\
+			~~~~~~~~+ blending & 4 & 8 &  1e-5 & 0.5 & 10  \\
+			\bottomrule
+			
+		\end{tabular}
+		\caption{Hyperparameters used to fine-tune RoBERTa individually for each training setting. We accept default settings for the other hyperparameters as defined in the implementation by \citet{phang2020jiant}. }
+		\label{t:hyperparameters}
+	\end{table*}
+	% End: Table 
+	
+	\section{Ethical Considerations}
+	\label{sec:appendix}
+	We use the PushShift API to collect data from Reddit.\footnote{\url{https://pushshift.io/api-parameters/}} 
+	The collection process is consistent with Reddit's Terms of Service. 
+	We access our data through the data dumps on Google's BigQuery using Python.\footnote{\url{https://pushshift.io/
+			using-bigquery-with-reddit-data/}} 
+	
+	Reddit can be considered a public space for discussion which differs from a private messaging service \cite{vidgen-etal-2021-introducing}. 
+	Users consent to have their data made available to third parties including academics when they sign up to Reddit. 
+	Existing ethical guidelines state that in this situation explicit consent is not required from each user \cite{DBLP:conf/tto/ProcterWBHEWJ19}. 
+	We obfuscate user names to reduce the possibility of identifying users. 
+	In compliance with Reddit's policy, we would like to make sure that our dataset will be reused for non-commercial research only.\footnote{\url{https://www.reddit.com/wiki/api-terms/}}
+	
+	The annotator was warned of the potential hateful content before working on our task. 
+	We provide annotator with access to supporting services throughout the task.
+	Annotator was compensated with 8 US\$ per hour.
+	
+	
+	\section{Data}
+	\label{sec:appendix_data}
+	The number of hate comments (Hate), replies (Reply) and comments after the replies (Future) in each subreddits are detailed in Table \ref{t:subreddits}. 
+	In total, there are 20,286 hate comments, 30,485 replies, and 59,356 comments after the replies from the 35 subreddits.
+	
+	
+	
+	\section{Detailed Results}
+	\label{sec:appendix_results}
+	Table \ref{t:detailed-results} presents detailed results complementing Table \ref{t:model-results} in the paper. 
+	We provide Precision, Recall and weighted F1-score using each related task for pretraining and blending.
+	%each weak data for blending the strong data when the input is Reply and Hate\_Reply respectively in Table \ref{t:detailed-results}.
+	
+	
+	\section{Hyperparamters and Finetuning Process}
+	\label{sec:appendix_hyper}
+	
+	Our dataset was pre-processed by removing URLs, removing symbols, removing any additional spaces, and at the end, converting all words to lower-case. 
+	The neural model takes about an hour on average to train on a single NVIDIA TITAN Xp. 
+	We use the implementation by \citet{phang2020jiant} and fine-tune the RoBERTa (base architecture; 12 layers) \cite{DBLP:journals/corr/abs-1907-11692} model for each of the four training settings. 
+	For each setting, we set the hyperparameters to be the same when the input is the hateful comment, the reply, or both (Table \ref{t:hyperparameters}).
+	
 \end{document}
