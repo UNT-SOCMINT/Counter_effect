@@ -91,7 +91,7 @@
 		We argue that what matters is stopping incivility from emerging in follow-up conversations---counter hate speech that elicits more incivility is counterproductive.
 		In this study, we introduce the task of predicting incivility in the follow-up conversation for a reply to hateful content.
 		The conversation incivility is measured based on the discourse following a reply: number of civil and uncivil comments published by each user.
-		A linguistic analysis draws insights into the differences in the language of replies with highly and barely incivility.
+		A linguistic analysis draws insights into the differences in the language of replies with high and low incivility.
 		Experimental results show that forecasting incivility is challenging.
 		We close with a qualitative analysis shedding light into the most common errors made by the best model.
 	\end{abstract}
@@ -162,15 +162,15 @@
 	while the number of uncivil comments are the same.
 	
 	Armed with the Reddit conversations and our metric,
-	we first conduct a linguistic analysis to analyze the characteristics of replies to hateful posts with varying degrees of conversation incivility (namely highly, somewhat or barely incivility).
-	We then experiment with classifiers to identify whether a reply will be highly, somewhat or barely incivility.
+	we first conduct a linguistic analysis to analyze the characteristics of replies to hateful posts with varying degrees of conversation incivility (namely high, medium or low incivility).
+	We then experiment with classifiers to identify whether a reply will be high, medium or low incivility.
 	Our models obtain modest results,
 	and we present a qualitative analysis describing the most common error types.
 	
 	We answer the following questions:
 	\begin{compactenum}
 		\item Are conversation incivility of all replies to hateful posts equal? (they aren't);
-		\item Do replies followed by highly, somewhat, and barely conversation incivility use different language? (they do);
+		\item Do replies that have high, medium, and low conversation incivility use different language? (they do);
 		\item Do models to assess the conversation incivility benefit from having access to the hateful post in addition to the reply? (they do);
 		\item When differentiating between the top-$k$ most and least uncivil replies,
 		is it true that the smaller the $k$ the easier the task? (it is).
@@ -256,7 +256,7 @@
 	In this study, we use community-based sampling and identify
 	%, similar to \citet{qian-etal-2019-benchmark} and \citet{vidgen-etal-2021-introducing}. 
 	%We identify
-	41 subreddits (see the full list in Appendix \ref{sec:appendix_data}) that are thought to be hateful~\cite{qian-etal-2019-benchmark,guest-etal-2021-expert,vidgen-etal-2021-introducing}. 
+	39 subreddits (see the full list in Appendix \ref{sec:appendix_data}) that are thought to be hateful~\cite{qian-etal-2019-benchmark,guest-etal-2021-expert,vidgen-etal-2021-introducing}. 
 	This includes subreddits such as \textit{r/MensRights},  \textit{r/PurplePillDebate}, \textit{r/ImGoingToHellForThis}, and \textit{r/Seduction}.
 	We retrieve a total of 1,382,596 comments from 5,325 submissions.
 	
@@ -282,7 +282,7 @@
 	(a) each hateful comment with each of its direct replies
 	and
 	(b) each reply to a hateful comment with all future comments in the same thread.
-	We found 21,845  hate comments in the 41 subreddits we work with.
+	We found 21,845  hate comments in the 39 subreddits we work with.
 	On average, a hate comment has 1.56 direct replies,
 	and there are 2.36 comments published after each reply.
 
@@ -307,29 +307,29 @@
 	We use the scores to group all replies based on quantiles (top 25\%, middle 50\%, and bottom 25\%). 
 	The categories show as following:
 	\begin{compactitem}
-		\item \emph{Highly} with $ S(r) \in [16.26,0.22) $;
-		\item \emph{Somewhat} with $ S(r) \in [0.22, -0.20) $; and
-		\item \emph{Barely} with  $ S(r) \in [-0.20, -48.76]$.
+		\item \emph{High} with $ S(r) \in [16.26,0.22) $;
+		\item \emph{Medium} with $ S(r) \in [0.22, -0.20) $; and
+		\item \emph{Low} with  $ S(r) \in [-0.20, -48.76]$.
 	\end{compactitem}
 
-	We refer to this grouping (highly, somewhat or barely) as the conversation incivility level of a reply.
-	Note that 95\% of replies with \emph{Somewhat} conversation incivility have no follow-up discourse ($S(r)=0$).   
-	Replies with \emph{Highly} conversation incivility always have at least one uncivil comment after $r$.
-	We will explore the differences in the use of language between replies with \emph{Highly} and \emph{Barely} conversational incivility in Section~\ref{s:corpus_analysis}.
+	We refer to this grouping (high, medium or low) as the conversation incivility level of a reply.
+	Note that 95\% of replies with \emph{Medium} conversation incivility have no follow-up discourse ($S(r)=0$).   
+	Replies with \emph{High} conversation incivility always have at least one uncivil comment after $r$.
+	We will explore the differences in the use of language between replies with \emph{High} and \emph{Low} conversational incivility in Section~\ref{s:corpus_analysis}.
 	
 	
 	
 	\paragraph{Manual Validation}
 	\label{ss:validation}
-	We manually validate the soundness of our metric with a sample of 500 replies (250 with highly incivility and 250 with barely incivility).
+	We manually validate the soundness of our metric with a sample of 500 replies (250 with high incivility and 250 with low incivility).
 	First, we select Reddit snippets containing 
 	(a) the hateful comment,
 	(b)	the reply,	and 
     (c) all comments published after the reply.
-	Second, we pair snippets where the reply has highly incivility with that has barely incivility (250 pairs).
+	Second, we pair snippets where the reply has high incivility with that has low incivility (250 pairs).
 	Third, we show the snippets to the annotators
 	and ask them which one of the two replies has higher conversational incivility.
-	We skip validating replies with somewhat incivility as most of them (95\%) have no following discourses, making the task quite easy.
+	We skip validating replies with medium incivility as most of them (95\%) have no following discourses, making the task quite easy.
 	We hire two research assistants as annotators.
 	Both annotators agree with the label obtained by the incivility scores on more than 85\% of the pairs,
 	and Cohen's $\kappa$ is above 0.70, which are considered substantial agreement.
@@ -339,19 +339,19 @@
 	\label{s:corpus_analysis}
 	
 	Table \ref{t:label-distribution} presents distribution of conversation incivility levels in our corpus.
-	We include in the highly incivility and barely incivility all replies with the threshold incivility scores.
-	Almost half of the replies to a hateful comment have somewhat conversation incivility~(49.5\%).
-	The number of replies with highly conversation incivility (25.2\%) and barely conversation incivility (25.3\%) are very close.
+	We include in the high incivility and low incivility all replies with the threshold incivility scores.
+	Almost half of the replies to a hateful comment have medium conversation incivility~(49.5\%).
+	The number of replies with high conversation incivility (25.2\%) and low conversation incivility (25.3\%) are very close.
 	We note that these percentages are encouraging, as these subreddits are known to harvest conversations about hateful topics.
 	
 	We show examples of each incivility level in Table \ref{t:corpus-examples}. 
 	In the first example,
 	the reply shows disagreement by attacking the author of the hate comment (\emph{little man}).
-	It leads to highly conversation incivility: 26 out of 33 comments that follow the reply are uncivil.
+	It leads to high conversation incivility: 26 out of 33 comments that follow the reply are uncivil.
 	Indeed, we observe the follow-up conversation is made up of behaviors where the original authors of the hateful comment and the reply  repetitively denigrating each other.
 	In the second example, the reply uses sarcasm to stop arguing with the hateful comment  (``Have a nice day!'').
 	There are no comments after this reply, yielding a 0 incivility score.
-	It is \emph{somewhat} incivility at stopping hatred---no additional uncivil comments is posted.
+	It has \emph{medium} conversation incivility---no additional uncivil comments is posted.
 	In the third example, the reply denounces the misbehavior in the hate comment is inappropriate without getting into details or personal attacks (``[...] It is not perfectly okay.'').
 	This strategy is a common counter hate strategy~\cite{DBLP:conf/icwsm/MathewSTRSMG019} and the follow-up conversation is barely uncivil: although 3 comments are uncivil, they are posted by the same user and 29 comments from 24 users remain civil.
 	
@@ -360,7 +360,7 @@
 		\begin{tabular}{lrrrr}
 			\toprule
 			& \multicolumn{3}{c}{Incivility level} \\ \cmidrule{2-4} 
-			\multicolumn{1}{c}{} & Highly & Somewhat & Barely & All \\
+			\multicolumn{1}{c}{} & High & Medium & Low & All \\
 			\hline
 			\addlinespace[1pt]
 			\# & 8,587 & 16,884 & 8,644 & 34,115 \\ 
@@ -378,15 +378,15 @@
 			\toprule
 			Hate: \emph{Lol this thread is full of internet losers like you.} \\
 			Reply: \emph{Ha! You don't even know me little man.}\\ \addlinespace
-			$S(r) = 5.02$, Highly incivility\\ 	
+			$S(r) = 5.02$, High incivility\\ 	
 			\midrule
 			Hate: \emph{Too easy to trigger you maga f**ks, snowflake.} \\
 			Reply: \emph{Have a nice day!}\\ \addlinespace
-			$S(r) = 0$, Somewhat incivility\\ 					
+			$S(r) = 0$, Medium incivility\\ 					
 			\midrule
 			Hate: \emph{Trash talking is perfectly ok. He is an a**hole and clearly cannot take it for sh*t.} \\
 			Reply: \emph{It's *tolerable* under those conditions. It is not perfectly okay.}\\ \addlinespace
-			$S(r) = -3.92$, Barely incivility\\ 
+			$S(r) = -3.92$, Low incivility\\ 
 			\bottomrule
 		\end{tabular}
 		
@@ -423,21 +423,21 @@
 			\bottomrule
 		\end{tabular}
 		
-		\caption{Linguistic analysis comparing the replies to hateful content that have highly and barely conversation incivility.
+		\caption{Linguistic analysis comparing the replies to hateful content that have high and low conversation incivility.
 			We also provide results of replies in each category of subreddits.
 			Number of arrows indicate the p-value (t-test; one: $p<0.05$, two: $p<0.01$, and three: $p<0.001$).
-			Arrow direction indicates whether higher values correlate with highly (up) or barely (down) incivility. 
+			Arrow direction indicates whether higher values correlate with high (up) or low (down) incivility. 
 			Tests that do not pass the Bonferroni correction are underlined.}
 		\label{t:linguistic}
 	\end{table*}
 	% End: Table 
 	
 	\paragraph{Linguistic insights} 
-	We perform a linguistic analysis to shed light on differences in the language people use in the replies with highly conversation incivility and barely conversation incivility.
+	We perform a linguistic analysis to shed light on differences in the language people use in the replies with high conversation incivility and low conversation incivility.
 	As different communities vary in the topics, content, rules, etc., 
-	we further conduct analyses in each type of communities to see whether the differences between highly and barely incivility still exist.
-	The 41 subreddits are grouped into five categories based on the taxonomy from~\citet{Weld_Zhang_Althoff_2022}.
-	The five categories we are using are: \emph{Discussion}, \emph{Hobby}, \emph{Identity}, \emph{Meme}, and \emph{Media-sharing} (see Appendix~\ref{}).
+	we further conduct analyses in each type of communities to see whether the differences between high and low incivility still exist.
+	The 39 subreddits are grouped into five categories based on the taxonomy from~\citet{Weld_Zhang_Althoff_2022}.
+	The five categories we are using are: \emph{Discussion}, \emph{Hobby}, \emph{Identity}, \emph{Meme}, and \emph{Media-sharing} (see Appendix~\ref{sec:appendix_data}).
 	
 	All factors we consider are based on counts of
 	(a)~textual features (top block)
@@ -448,13 +448,13 @@
 	We use spaCy to check for the mentions of named entities.\footnote{\url{https://spacy.io/usage/linguistic-features}}
 	For sentiment and cognition, we use the Sentiment Analysis and Cognition Engine (SEANCE) lexicon,
 	a tool for psychological linguistic analysis \cite{crossley2017sentiment}. 
-	Statistical tests are conducted using unpaired t-tests between the groups, of which the replies have highly or barely conversation incivility.
+	Statistical tests are conducted using unpaired t-tests between the groups, of which the replies have high or low conversation incivility.
 	We draw several interesting insights:
 	\begin{compactitem}
-		\item Regarding textual factors for all the replies, the more tokens, negations, pronouns (1st and 2nd person), entities of nationalities or religious or political groups, question and quotation marks indicate that the reply has highly conversation incivility.
+		\item Regarding textual factors for all the replies, the more tokens, negations, pronouns (1st and 2nd person), entities of nationalities or religious or political groups, question and quotation marks indicate that the reply has high conversation incivility.
 		As negation cues are often used to dispute the hateful comment, the future trajectory of conversation has a higher chance to turn uncivil.
 		\item Regarding sentiment, there are significant differences in the uses of positive and negative words. Replies that use more hatred, disgust and angry words are more inclined to tie with a higher incivility degree in the follow-up conversations.
-		\item Although topics, content and rules vary across communities, we observe consistency in the differences between highly and barely incivility. The more 2nd pronouns referring to the author of the hateful comment and the more negative words in the replies, the higher conversation incivility they have.
+		\item Although topics, content and rules vary across communities, we observe consistency in the differences between high and low incivility. The more 2nd pronouns referring to the author of the hateful comment and the more negative words in the replies, the higher conversation incivility they have.
 	\end{compactitem}
 	
 	
@@ -464,7 +464,7 @@
 	
 	We experiment with models to solve two problems:
 	\begin{compactitem}
-		\item Determining the conversation incivility level of a reply to hateful content: highly, somewhat or barely incivility (Section \ref{ss:levels}); and
+		\item Determining the conversation incivility level of a reply to hateful content: high, medium or low incivility (Section \ref{ss:levels}); and
 		\item Differentiating the top-$k$\% and bottom-$k$\% replies according to their conversation incivility scores (Section \ref{ss:topbottom}).
 	\end{compactitem}
 	
@@ -481,7 +481,7 @@
 		\centering	
 		\begin{tabular}{l ccc ccc ccc ccc}
 			\toprule
-			\multicolumn{1}{c}{} & \multicolumn{3}{c}{Highly} & \multicolumn{3}{c}{Somewhat} & \multicolumn{3}{c}{Barely} & \multicolumn{3}{c}{Weighted Average} \\
+			\multicolumn{1}{c}{} & \multicolumn{3}{c}{High} & \multicolumn{3}{c}{Medium} & \multicolumn{3}{c}{Low} & \multicolumn{3}{c}{Weighted Average} \\
 			\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
 			& P & R & F1 & P & R & F1 & P & R & F1 & P & R & F1 \\
 			\hline
@@ -528,14 +528,13 @@
 		\end{tabular}
 		\caption{Experimental results differentiating the top-$k$\% and bottom-$k$\% replies to hateful content according to their incivility scores.
 			We present results for several values of $k$.
-			The results are higher than when also identifying replies with \emph{somewhat} incivility.
+			The results are higher than when also identifying replies with \emph{medium} incivility.
 			Additionally, it is easier to differentiate the replies that have the very top and bottom of the incivility scores: the smaller the $k$, the higher the weighted average.
 		}
 		\label{t:model-optimalk}
 	\end{table*}
 	
 	\subsection{Determining Incivility Level}
-	%: Highly, Somewhat, or Barely Effective}
 	\label{ss:levels}
 	
 	%\paragraph{Neural Network Architecture} 
@@ -543,7 +542,7 @@
 	The neural architecture consists of the RoBERTa transformer, 
 	a fully connected layer (768 neurons and \texttt{tanh} activation), 
 	and 
-	another fully connected layer (3 neurons and softmax activation) to make predictions (highly, somewhat, or barely incivility). 
+	another fully connected layer (3 neurons and softmax activation) to make predictions (high, medium, or low incivility). 
 	To investigate whether adding the hate comment would be beneficial, we consider three textual inputs:
 	\begin{compactitem}
 		\item the hate comment;
@@ -590,22 +589,22 @@
 			Error Type & \% & Example & Ground Truth  & Predicted  \\ \midrule
 			
 			Rhetorical question & 23 & Hate: \emph{Why not complain about women you sad pathetic f**k?} &  & \\
-			&    & Reply: \emph{Haha another b**ch a** white knight. F**k off sissy.} & Somewhat & Highly  \\
+			&    & Reply: \emph{Haha another b**ch a** white knight. F**k off sissy.} & Medium & High  \\
 			\midrule
-			Uncivil but barely incivility & 18 & Hate: \emph{I've addressed this about forty times with as many smooth brains as you so. You're an idiot.} & & \\
-			&   &  Reply: \emph{I think you might be the idiot here retard.} & Barely & Highly \\
+			Uncivil but low incivility & 18 & Hate: \emph{I've addressed this about forty times with as many smooth brains as you so. You're an idiot.} & & \\
+			&   &  Reply: \emph{I think you might be the idiot here retard.} & Low & High \\
 			\midrule
-			Civil but highly incivility & 16 & Hate: \emph{You’re an ignorant twat who just parrots what they read in FB and reddit memes. [\ldots] What a cancer you are.}  & & \\
-			&  & Reply: \emph{Calling others cancer is taking it too far. Mind rule 4, please.} & Highly & Barely\\
+			Civil but high incivility & 16 & Hate: \emph{You’re an ignorant twat who just parrots what they read in FB and reddit memes. [\ldots] What a cancer you are.}  & & \\
+			&  & Reply: \emph{Calling others cancer is taking it too far. Mind rule 4, please.} & High & Low\\
 			\midrule
 			Sarcasm or irony & 15 & Hate: \emph{No you retard, where is the f**king lie?} & & \\
-			&  & Reply: \emph{Name calling nice argument.} & Highly & Barely \\
+			&  & Reply: \emph{Name calling nice argument.} & High & Low \\
 			\midrule
 			General knowledge & 10 & Hate: \emph{lol bet you thought a single thing you said wasn’t retarded.} & & \\
-			&  & Reply: \emph{This place is infested with incels and TD trolls. } & Highly & Somewhat \\
+			&  & Reply: \emph{This place is infested with incels and TD trolls. } & High & Medium \\
 			\midrule
 			Negation & 8 & Hate: \emph{Why we have to tolerate Islam? They call us filth. Christians are horrible as well. Both are f**king awful.} && \\
-			& & Reply: \emph{Not all Muslims are bigots, like not all Christians are bigots.} & Somewhat & Highly \\
+			& & Reply: \emph{Not all Muslims are bigots, like not all Christians are bigots.} & Medium & High \\
 			\bottomrule
 		\end{tabular}
 		\caption{Most common error types made by the best model (predictions by hate comment + reply + pretraining).
@@ -617,7 +616,7 @@
 	\subsubsection{Quantitative Results}
 	We split the 34,115 replies in our corpus into training (60\%), development (20\%) and testing (20\%).
 	We present results with the testing split in Table \ref{t:model-results}.
-	The majority baseline always predicts \emph{somewhat}.
+	The majority baseline always predicts \emph{medium}.
 	The remaining rows present results with different settings:
 	using as input the \emph{hate comment}, the \emph{reply} or both without pretraining or blending, and also with
 	pretraining, blending and both.
@@ -638,7 +637,7 @@
 	\label{ss:topbottom}
 	Although determining the incivility level of any replies to hateful comment is a worthwhile goal (Section \ref{ss:levels}),
 	differentiating between the top-$k$\% and bottom-$k$\% replies according to their incivility scores may lead to better actionable knowledge.
-	Replies with the highest and lowest incivility scores are more informative than the large amount of replies with highly and barely conversation incivility.
+	Replies with the highest and lowest incivility scores are more informative than the large amount of replies with high and low conversation incivility.
 	Indeed, the latter have a large range of incivility scores.
 	
 	Table \ref{t:model-optimalk} presents the results with several $k$ values.
@@ -665,11 +664,11 @@
 	
 	The second and third most common error types (18\% and 16\%)
 	are when a reply is
-	(a)~uncivil but has barely incivility
+	(a)~uncivil but has low incivility
 	or
-	(b)~civil but has highly incivility.
+	(b)~civil but has high incivility.
 	Using uncivil language is a counter hate strategy~\cite{DBLP:conf/icwsm/MathewSTRSMG019},
-	and the model fails to recognize when doing so leads to barely conversation incivility .
+	and the model fails to recognize when doing so leads to low conversation incivility .
 	Similarly, the model struggles when countering hate politely elicits additional uncivil behaviors.
 	When correcting misstatements, language toxicity may increase~\cite{10.1145/3411764.3445642}.
 	
@@ -681,7 +680,7 @@
 	Errors may also occur (10\%) when general knowledge is required to identify hate content that does not use offensive language (e.g., calling people \emph{incels}).
 	Finally, we observe that \emph{negation} appears in 8\% errors.
 	In the example, negations are used to point out the flaws of generalizing.
-	We hypothesize that the model fails to identify that the reply has somewhat conversation incivility: negation does indicate highly incivility in general (Table~\ref{t:linguistic}).
+	We hypothesize that the model fails to identify that the reply has medium conversation incivility: negation does indicate high incivility in general (Table~\ref{t:linguistic}).
 	
 	
 	\section{Conclusions}
@@ -695,7 +694,7 @@
 	Indeed, our analyses can recover some of the intuition: replies that use more negative and hateful words are tied with a higher incivility degree in their follow-up conversations.
 	Experimental results show that pretraining and blending existing corpora yield improvements, while the task of forecasting conversation incivility is still challenging to automate.
 	
-	We rely on automated methods to formulate a setting that allows us to differentiate replies with highly conversation incivility from barely conversation incivility. 
+	We rely on automated methods to formulate a setting that allows us to differentiate replies with high conversation incivility from low conversation incivility. 
 	Our manual validation suggests that it is feasible at the level of human intuition where follow-up conversations are accessible (see Section~\ref{ss:validation}).
 	The experiments that differentiate the top-$k$\% from bottom-$k$\% achieve even more encouraging results when $k$ is smaller, where follow-up conversations are not accessible (see Section~\ref{ss:topbottom}).
 	Both bring up the potential of automated methods to measure and forecast conversation incivility of replies to hateful content, when they usually have at least one comment following.
@@ -729,77 +728,48 @@
 			\toprule
 			Subreddit & Hate  & Reply & Future\\
 			\midrule
-			4Chan	 & 513 &	851	&1,349\\
-			antiwork &	610	&1,396	&2,256\\	
-			atheism	&422	&715	&1,648
-			\\
-			bakchodi	&91	&116	&191
-			\\
-			bindingofisaac	&60	&91	&129
-			\\
-			BlackPeopleTwitter	&59	&151	&239
-			\\
-			changemyview	&835	&1,127&	1,890
-			\\
-			conspiracy&	1,150&	1,717&	3,069
-			\\
-			DankMemes&	1,384&	2,136&	4,106
-			\\
-			DotA2&	223&	415&	708
-			\\
-			Drama&	261	&447	&654
-			\\
-			FemaleDatingStrategy&	142	&312&	303
-			\\
-			Feminism&	73&	136	&179
-			\\
-			GenZedong&	139&	198	&232
-			\\
-			HermanCainAward&	1,337&	1,932&	3,650
-			\\
-			justneckbeardthings&	840&	1,362&	3,441
-			\\
-			KotakuInAction&	343	&549	&796
-			\\
-			lmGoingToHellForThis&	124	&143&	211
-			\\
-			MensRights&	1,463&	1,987&	4,891
-			\\
-			MetaCanada	&664&	828	&1,546
-			\\
-			modernwarfare&	209	&316	&694
-			\\
-			NoFap&	60	&66&	75
-			\\
-			playrust	&108&	142	&308
-			\\
-			PurplePillDebate&	1,194&	1,599&	4,100
-			\\
-			PussyPass&	656&	791&	1,432
-			\\
-			PussyPassDenied	&3,258&	4,635&	9,060
-			\\
-			Seduction&	174	&239&	364
-			\\
-			ShitPoliticsSays&	630	&819	&2,283
-			\\
-			ShitRedditSays	&271&	353&	491
-			\\
-			Sino&	40&	87&	43
-			\\
-			SubredditDrama&	1,411&	2,204&	4,683
-			\\
-			TrueReddit	&319	&440&	1,096
-			\\
-			TumblrInAction&	138&	184&	359
-			\\
-			TwoXChromosomes	&197	&637&	562
-			\\
-			worldnews	&888&	1,364&	2,318\\
+			antiwork& 	523	& 1272	& 3754\\
+			politics& 	751	& 1539	& 4195\\
+			conspiracy& 	996	& 1479& 	4312\\
+			BlackPeopleTwitter& 	39	& 93	& 344\\
+			SubredditDrama& 	1347& 	2217& 	5087\\
+			DankMemes& 	1208& 	1878	& 5369\\
+			modernwarfare	& 189	& 289& 	872\\
+			atheism	& 731	& 1331	& 3276\\
+			justneckbeardthings	& 736& 	1227& 	2739\\
+			4Chan& 	894	& 1467	& 3437\\
+			oblivion& 	1885& 	2782& 	4462\\
+			TwoXChromosomes	& 106& 	185& 	664\\
+			mensrights& 	1332& 	1897& 	5419\\
+			dota2	& 215& 	379	& 925\\
+			HermanCainAward& 	1126& 	1728	& 3110\\
+			PurplePillDebate	& 1075& 	1517& 	4900\\
+			PussyPassDenied& 	2947& 	4494& 	10168\\
+			worldnews& 	786& 	1223	& 2903\\
+			changemyview	& 768& 	1080& 	1937\\
+			playrust	& 99& 	134& 	366\\
+			MetaCanada	& 575& 	753& 	1334\\
+			bindingofisaac	& 52& 	79& 	134\\
+			TumblrInAction	& 125& 	185& 	512\\
+			ShitPoliticsSays	& 567& 	862& 	2142\\
+			KotakuInAction	& 326& 	533& 	989\\
+			TrueReddit	& 288& 	425	& 1198\\
+			Conservative	& 330& 	487	& 1256\\
+			NoFap	& 58	& 74& 	164\\
+			GenZedong	& 118& 	171	& 269\\
+			PussyPass	& 599	& 790& 	1416\\
+			Drama& 	228	& 382& 	741\\
+			bakchodi& 	79& 	107& 	215\\
+			ShitRedditSays	& 212	& 291& 	482\\
+			Seduction	& 162	& 223& 	438\\
+			FemaleDatingStrategy& 	117	& 204& 	375\\
+			Feminism	& 48& 	67	& 123\\
+			india	& 68& 	98	& 161\\
+			lmGoingToHellForThis& 	113	& 136& 	224\\
+			Sino	& 27& 	37& 	43 \\
 			\midrule
-			Total & 20,286 & 30,485 & 59,356 \\
+			Total & 21845	& 34115& 	80455 \\
 			\bottomrule
-			
 		\end{tabular}
 		\caption{Number of hate comments, replies, and comments after the replies per subreddit.}
 		\label{t:subreddits}
@@ -815,49 +785,45 @@
 		\setlength{\tabcolsep}{.07in}
 		\begin{tabular}{l ccc ccc ccc ccc}
 			\toprule
-			\multicolumn{1}{c}{} & \multicolumn{3}{c}{Highly} & \multicolumn{3}{c}{Somewhat} & \multicolumn{3}{c}{Barely} & \multicolumn{3}{c}{Weighted Average} \\
+			\multicolumn{1}{c}{} & \multicolumn{3}{c}{High} & \multicolumn{3}{c}{Medium} & \multicolumn{3}{c}{Low} & \multicolumn{3}{c}{Weighted Average} \\
 			\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
 			& P & R & F1 & P & R & F1 & P & R & F1 & P & R & F1 \\
 			\hline \addlinespace 
-			Majority Baseline & 0.00 & 0.00 & 0.00 & 0.49 & 1.00 & 0.66 & 0.00 & 0.00 & 0.00 & 0.24 & 0.49 & 0.33 \\		
+			Majority Baseline &0.00 & 	0.00&	0.00&	0.49	&1.00	&0.66	&0.00	&0.00&	0.00&	0.24	&0.49&	0.32 \\		
 			reply\\
 			~~~~+ pretraining with \\
-			~~~~~~~~~~~Hate\_twitter & 0.40 & 0.59	& 0.47  & 0.75 & 0.57	& 0.65	& 0.34	& 0.30 & 0.32 & 0.56	& 0.52	& 0.53\\
-			~~~~~~~~~~~Hate\_reddit & 0.40 & 0.58	& 0.47	& 0.74 &	0.57 &	0.64 & 0.36	& 0.32	& 0.34  &	0.56 &	0.52 &	0.53\\
-			~~~~~~~~~~~Sentiment & 0.38 & 0.55	& 0.45	&	0.73 &	0.57 &	0.64 & 0.35 & 0.31 &	0.33  &	0.55 &	0.51 &	0.52\\
-			~~~~~~~~~~~Sarcasm & 0.38 & 0.55 &	0.45 &	0.69 &	0.56 &	0.62 &	0.37 &	0.30 &	0.33  &	0.53 &	0.50 &	0.51\\
-			~~~~~~~~~~~Counter & 0.39 & 0.52 &	0.45 &	0.74 &	0.57 &	0.64 &	0.32 &	0.35 &	0.33  & 	0.55 &	0.51 &	0.52\\
-			~~~~~~~~~~~Stance & 0.40 &	0.54 &	0.46 &	0.75 &	0.56 &	0.64 &	0.33 &	0.36 &	0.35  &	0.56 &	0.51 &	0.52\\
-			~~~~~~~~~~~Referential &\textbf{ 0.41 }& \textbf{0.59} & \textbf{0.48} & 0.37 & 0.32 & 0.34 & 0.69 & 0.59 & 0.64 & 0.56 & 0.53 & 0.54\\ 
+			~~~~~~~~~~~Hate & 0.46&	0.33&	0.39&	0.54&	0.83	&0.65&	0.35&	0.09&	0.14	&0.47	&0.51&	0.45\\
+			~~~~~~~~~~~Sentiment & 0.43&	 0.30&	0.36&	0.55&	0.67&	0.61&	0.30&	0.27&	0.29&	0.46&	0.47&	0.46\\
+			~~~~~~~~~~~Sarcasm & 0.45&	0.32&	0.37&	0.54&	0.80&	0.64&	0.33&	0.11	&0.16&	0.46&	0.50&	0.45\\
+			~~~~~~~~~~~Counter & 0.44&	0.37&	0.40	&0.56&	0.72	&0.63&	0.32&	0.20&	0.25&	0.47&	0.50&	0.47\\
+			~~~~~~~~~~~Stance & 0.42	&0.40&	0.41	&0.54&	0.73&	0.62&	0.30&	0.11&	0.16&	0.45&	0.49&	0.45\\
 			~~~~+ blending with\\
-			~~~~~~~~~~~Sentiment & 0.39 & 0.49 & 0.44 &	0.72 &	0.59 &	0.65 & 0.38 &	0.39 &	0.38  &	0.55 &	0.52 &	0.53\\
-			~~~~~~~~~~~Counter & 0.40  & 0.56 & 0.47 &	0.70 &	0.61 &	0.65  &	0.40 & 0.31 &	0.35 &	0.55 &	0.53 &	0.53\\
-			~~~~~~~~~~~Stance & 0.40 & 0.51 & 0.45 &	0.69 &	0.62 &	0.65 &	0.39 &	0.34 &	0.36  &	0.54 &	0.56 &	0.53 \\
+		    ~~~~~~~~~~~sentiment& 	0.40& 	0.39& 	0.40	& 0.54& 	0.73	& 0.62& 	0.34& 	0.13& 	0.19& 	0.46& 	0.49& 	0.45 \\
+			~~~~~~~~~~~counter& 	0.40& 	0.38& 	0.39& 	0.55& 	0.70& 	0.61& 	0.29& 	0.16& 	0.20& 	0.45& 	0.48& 	0.45 \\
+			~~~~~~~~~~~stance	& 0.42	& 0.40& 	0.41& 	0.54& 	0.73	& 0.62& 	0.30& 	0.11& 	0.16	& 0.45& 	0.49& 	0.45 \\
 			~~~~+ pretraining + blending \\
-			~~~~~~~~~~~Sentiment & 0.40 & 0.46 & 0.43 & 0.66 & 0.66 &	0.66 & 0.37 &	0.30 & 0.33 &	0.52 &	0.52 &	0.52\\
-			~~~~~~~~~~~Counter &\textbf{0.41} &	\textbf{0.57} & \textbf{0.48 }&	0.72 &	0.59 &	0.65 & 0.39 &	0.34 &	0.37 &	0.56 &	0.53 &	0.54\\
-			~~~~~~~~~~~Stance & 0.39 &	0.50 & 	0.44 &	0.69 &	0.62 &	0.65 &	0.38 &	0.33 &	0.36  &	0.54 &	0.52 &	0.53\\
+			~~~~~~~~~~~sentiment& 	0.40	& 0.39	& 0.40& 	0.54& 	0.74	& 0.62	& 0.29& 	0.09& 	0.14	& 0.44& 	0.48& 	0.44 \\
+			~~~~~~~~~~~counter&  	0.45& 	0.35& 	0.40& 	0.54& 	0.84& 	0.66& 	0.39& 	0.07& 	0.11& 	0.48& 	0.52	& 0.45 \\
+			~~~~~~~~~~~stance& 	0.47& 	0.39	& 0.43& 	0.57& 	0.70	& 0.63	& 0.34& 	0.25& 	0.29& 	0.49& 	0.51& 	0.49 \\
 			hate comment + reply\\
 			~~~~+ pretraining with \\
-			~~~~~~~~~~~Hate\_twitter & 0.40 & 0.45 & 0.42 &	0.68 &	0.62 & 0.65 & 0.37 &	0.39 &	0.38  & 0.53 & 0.52 &	0.53\\
-			~~~~~~~~~~~Hate\_reddit & 0.40 & 0.58 & 0.47 &	0.74 &	0.57 &	0.64 &	0.36 &	0.32 &	0.34  &	0.56 &	0.52 &	0.53\\
-			~~~~~~~~~~~Sentiment & 0.39 &  0.34 & 0.36 & 	0.58 & 	0.75 & 	0.65 &  0.42 &  0.21 &  0.28 & 	0.49 & 	0.51 & 	0.49\\
-			~~~~~~~~~~~Sarcasm & 0.38 & 0.55 &	0.45 & 0.69 & 0.56 & 	0.62 & 	0.37 & 	0.3 & 0.33 & 	0.53 & 	0.50  & 0.51\\
-			~~~~~~~~~~~Counter & 0.40 & 0.43 &  0.41 & 	0.75 & 	0.58 & 	0.66 &	0.34 & 	0.47 & 	0.39  & 	0.56 & 	0.51 & 	0.53\\
-			~~~~~~~~~~~Stance & 0.38 &	0.49 &	0.43 &	0.67 &	0.55 &	0.60 &	0.37 &	0.38 &	0.37  &	0.52 &	0.50 &	0.50\\
-			~~~~~~~~~~~Referential & 0.39 & 0.51 & 0.44 & 0.37 & 0.34 & 0.35 & 0.69 & 0.59 & 0.64 & 0.53 & 0.51 & 0.52\\
+			~~~~~~~~~~~hate	& 	0.45&	0.28&	0.35	&0.53	&0.83&	0.65&	0.34&	0.10	&0.15&	0.46&	0.50	&0.44 \\
+			~~~~~~~~~~~sentiment	&0.45&	0.38&	0.41&	0.54&	0.79&	0.65&	0.36&	0.09&	0.15&	0.47&	0.51	&0.46 \\
+			~~~~~~~~~~~sarcasm	&0.40&	0.39&	0.40&	0.54&	0.74	&0.62&	0.29&	0.09	&0.14&	0.44&	0.48&	0.44 \\
+			~~~~~~~~~~~counter &	0.45&	0.26&	0.33&	0.54&	0.77&	0.64&	0.34&	0.22&	0.26&	0.47&	0.50&	0.46 \\
+			~~~~~~~~~~~stance&	\textbf{0.52}&	\textbf{0.43}	&\textbf{0.47}&	\textbf{0.59}	&\textbf{0.77}	&\textbf{0.67}&	0.42&	0.23&	0.30	&\textbf{0.53}&	\textbf{0.55}&	\textbf{0.52} \\
 			~~~~+ blending with \\
-			~~~~~~~~~~~Sentiment & 0.38 &	0.42 &	0.40 &	0.67 &	0.63 &	0.65 &	0.38 &	0.38 &	0.38 &	0.52 &	0.52 &	0.52\\
-			~~~~~~~~~~~Counter &0.38 &	0.41 &	0.40 &	0.64 &	0.66 &	0.65 &	0.38 &	 0.31 &	0.35 &	0.51 &	0.51 &	0.51\\
-			~~~~~~~~~~~Stance & 0.42 &	0.54 &	0.47 &	\textbf{0.71} &	\textbf{0.65} &	\textbf{0.68} &	0.41 &	0.32 &	0.36  &	0.56 &	0.55 &	0.55 \\
+			~~~~~~~~~~~sentiment	&0.45&	0.34&	0.39&	0.54&	0.81&	0.65	&0.32	&0.09&	0.14&	0.46	&0.51&	0.45 \\
+			~~~~~~~~~~~counter 	&0.43	&0.37	&0.40&	0.54&	0.79&	0.64&	0.35&	0.10 &	0.16&	0.47&	0.51&	0.46 \\
+			~~~~~~~~~~~stance	&0.45&	0.35&	0.40&	0.54&	0.76&	0.66&	0.39	&0.04&	0.08&	0.48&	0.52	&0.45 \\
 			~~~~+ pretraining + blending\\
-			~~~~~~~~~~~Sentiment & 0.40 &	0.45 &	0.42 &	0.68 &	0.60 &	0.64 &	0.37 &	0.41 &	0.39 &	0.53 &	0.52 &	0.52\\
-			~~~~~~~~~~~Counter & 0.40 & 0.47 &	0.43 &	0.71 &	0.56 &	0.63 & \textbf{0.36} &	\textbf{0.45} &	\textbf{0.40}  &	0.55 &	0.51 & 0.52\\
-			~~~~~~~~~~~Stance & 0.43 &	0.52 &	0.47&	\textbf{0.74} &	\textbf{0.64} &	\textbf{0.68}  &	\textbf{0.39} &	\textbf{0.41} & \textbf{	0.40} &	\textbf{0.58} &	\textbf{0.55} &	\textbf{0.56} \\
+			~~~~~~~~~~~sentiment&	0.42&	0.35&	0.38&	0.55&	0.74&	0.63&	0.31&	0.14&	0.19&	0.45&	0.49&	0.46 \\
+			~~~~~~~~~~~counter 	&0.48&	0.43&	0.45&	0.58&	0.71	&0.64&	0.36&	0.24&	0.29&	0.50	&0.52	&0.50 \\
+			~~~~~~~~~~~stance	&0.48&	0.42&	0.45&	0.59&	0.72	&0.65&	\textbf{0.38}&	\textbf{0.27}&	\textbf{0.32}&	\textbf{0.51}&	\textbf{0.53}&	\textbf{0.52} \\
 			\bottomrule
 			
 		\end{tabular}
-		\caption{Detailed results (P, R, and F) predicting whether the reply is Highly, Somewhat, and Barely when the input is only the reply or the hate comment + reply. These results are using RoBERTa and pretrained with or blending each each related task. This table complements Table \ref{t:model-results} in the paper.}
+		\caption{Detailed results (P, R, and F) predicting whether the reply has High, Medium, and Low conversation incivility when the input is only the reply or the hate comment + reply. These results are using RoBERTa and pretrained with or blending each each related task. This table complements Table \ref{t:model-results} in the paper.}
 		\label{t:detailed-results}
 	\end{table*}
 	% End: Table 
@@ -868,12 +834,12 @@
 		\small
 		\begin{tabular}{lccccc}
 			\toprule
-			& Epochs & Batch size & Learning rate & Dropout & Patience \\
+			& Epochs & Batch size & Learning rate & Dropout  \\
 			\midrule
-			reply &  5 & 8 & 1e-5 & 0.5 & 10 \\
-			~~~~+ blending & 5 & 8 &  1e-5 & 0.5 & 10 \\
-			~~~~+ pretraining & 5 & 8 &  1e-5 & 0.5 & 10\\
-			~~~~~~~~+ blending & 4 & 8 &  1e-5 & 0.5 & 10  \\
+			reply &  5 & 8 & 1e-5 & 0.5  \\
+			~~~~+ blending & 5 & 8 &  1e-5 & 0.5  \\
+			~~~~+ pretraining & 3 & 8 &  1e-5 & 0.5 \\
+			~~~~~~~~+ blending & 5 & 8 &  1e-5 & 0.5  \\
 			\bottomrule
 			
 		\end{tabular}
@@ -881,6 +847,7 @@
 		\label{t:hyperparameters}
 	\end{table*}
 	% End: Table 
+	
 	
 	\section{Ethical Considerations}
 	\label{sec:appendix}
@@ -895,15 +862,21 @@
 	We obfuscate user names to reduce the possibility of identifying users. 
 	In compliance with Reddit's policy, we would like to make sure that our dataset will be reused for non-commercial research only.\footnote{\url{https://www.reddit.com/wiki/api-terms/}}
 	
-	The annotator was warned of the potential hateful content before working on our task. 
-	We provide annotator with access to supporting services throughout the task.
-	Annotator was compensated with 8 US\$ per hour.
+	The annotators were warned of the potential hateful content before working on our task. 
+	We provide annotators with access to supporting services throughout the task.
+	Annotators were compensated with 8 US\$ per hour.
 	
 	
 	\section{Data}
 	\label{sec:appendix_data}
 	The number of hate comments (Hate), replies (Reply) and comments after the replies (Future) in each subreddits are detailed in Table \ref{t:subreddits}. 
-	In total, there are 20,286 hate comments, 30,485 replies, and 59,356 comments after the replies from the 35 subreddits.
+	In total, there are 21,845 hate comments, 34,115 replies, and 80,455 comments after the replies from the 39 subreddits.
+	
+	We utilize the taxonomy by~\citet{Weld_Zhang_Althoff_2022} to investigate the language in higher-level notions of community topic and focus. 
+	We hand-label communities in the following categories iteratively until reaching agreement among the author team. 
+	We include News in Media-sharing as both communities are for sharing information.
+	The five categories are: Discussion communities \emph{e.g., /r/changemyview, /r/antiwork}, Hobby communities \emph{e.g., /r/dota2, /r/otakuInAction}, Identity communities \emph{e.g., /r/Feminism, /r/india}, Meme communties \emph{e.g., /r/DankMemes, /r/HermanCainAward}, and Media-sharing communities \emph{e.g., /r/worldnews, /r/conspiracy}.
+	
 	
 	
 	
@@ -911,7 +884,6 @@
 	\label{sec:appendix_results}
 	Table \ref{t:detailed-results} presents detailed results complementing Table \ref{t:model-results} in the paper. 
 	We provide Precision, Recall and weighted F1-score using each related task for pretraining and blending.
-	%each weak data for blending the strong data when the input is Reply and Hate\_Reply respectively in Table \ref{t:detailed-results}.
 	
 	
 	\section{Hyperparamters and Finetuning Process}
